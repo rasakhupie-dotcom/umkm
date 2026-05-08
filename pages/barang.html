@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarkopPOS — Master Barang</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s; }
+    .modal-overlay.open { opacity:1;pointer-events:all; }
+    .modal { background:var(--bg-surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform .25s; }
+    .modal-overlay.open .modal { transform:translateY(0); }
+    .modal-title { font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:18px; }
+  </style>
+<script>
+  // Auth Guard — redirect ke login jika belum login
+  (function() {
+    var s = sessionStorage.getItem('warkop_session');
+    if (!s) { window.location.href = '../login.html'; return; }
+    try { var sess = JSON.parse(s); if (Date.now() > sess.expiresAt) { sessionStorage.removeItem('warkop_session'); window.location.href = '../login.html'; } }
+    catch(e) { window.location.href = '../login.html'; }
+  })();
+</script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">☕</div><div class="brand-text"><span class="brand-name">WarkopPOS</span><span class="brand-sub">Stok Opname System</span></div></div>
+  <div class="role-pill" id="rolePill"><span class="role-dot"></span><span id="roleLabel">Owner</span></div>
+  <nav class="nav">
+    <div class="nav-section">Utama</div>
+    <a href="../index.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg>Dashboard</a>
+    <a href="pos.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>Kasir POS</a>
+    <a href="opname.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/></svg>Stok Opname</a>
+    <div class="nav-section">Manajemen</div>
+    <a href="barang.html" class="nav-link active"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clip-rule="evenodd"/></svg>Master Barang</a>
+    <a href="bom.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>Bill of Material</a>
+    <a href="supplier.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/><path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H11a1 1 0 001-1v-1h2.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1V8a1 1 0 00-.293-.707l-2-2A1 1 0 0017 5h-3a1 1 0 00-1 1v3H3V4z"/></svg>Supplier</a>
+    <div class="nav-section">Laporan</div>
+    <a href="reorder.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>Reorder Point<span class="nav-badge danger">3</span></a>
+    <a href="pareto.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>Analisis Pareto</a>
+    <a href="laporan.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>Laporan Harian</a>
+  </nav>
+      <div class="nav-section">Sistem</div>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Manajemen User</a>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync</a>
+  <div class="sidebar-footer"><select id="roleSwitch" onchange="window.WarkopApp.switchRole(this.value)"><option value="owner">🔑 Login: Owner</option><option value="karyawan">👤 Login: Karyawan</option></select></div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="window.WarkopApp.toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1 class="page-title">Master Data Barang</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-display" id="clockDisplay">—</div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span id="syncStatus" style="font-size:10px;font-weight:700;color:var(--accent-amber);cursor:pointer;"
+          onclick="window.WarkopSync?.showConfigModal()" title="Klik untuk konfigurasi sync">
+          ○ Belum terhubung
+        </span>
+        <span id="lastSync" style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);">Klik untuk setup</span>
+      </div>
+      <input type="text" id="searchInput" placeholder="Cari barang..." oninput="renderTable()" style="width:180px;padding:6px 12px;font-size:12px;" />
+      <button class="btn btn-sm btn-primary owner-only" id="btnTambah" onclick="openModal()">+ Tambah Barang</button>
+    </div>
+  </header>
+
+  <div class="page-content">
+    <div class="card" data-animate="fade-up">
+      <div class="tabs">
+        <div class="tab active" onclick="filterTab('all',this)">Semua</div>
+        <div class="tab" onclick="filterTab('Bahan Baku',this)">Bahan Baku</div>
+        <div class="tab" onclick="filterTab('Barang Jual',this)">Barang Jual</div>
+        <div class="tab" onclick="filterTab('Inventaris',this)">Inventaris</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Barcode</th><th>Nama Barang</th><th>Kategori</th><th>Supplier</th>
+              <th>Satuan</th><th>Stok Saat Ini</th><th>Min Stok</th><th>Safety</th>
+              <th>Lead Time</th><th>ROP</th><th>H. Beli</th><th>H. Jual</th><th>Status</th><th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="barangBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL TAMBAH/EDIT -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Tambah Barang Baru</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Barcode / ID</label><input id="f_id" placeholder="WK-xxx" /></div>
+      <div class="form-group"><label class="form-label">Nama Barang</label><input id="f_nama" placeholder="Nama barang" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Kategori</label>
+        <select id="f_kat"><option>Bahan Baku</option><option>Barang Jual</option><option>Inventaris</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Supplier</label><input id="f_sup" placeholder="Nama supplier" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Satuan</label><input id="f_satuan" placeholder="gram / ml / pcs" /></div>
+      <div class="form-group"><label class="form-label">Stok Saat Ini</label><input id="f_stok" type="number" placeholder="0" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Min. Stok</label><input id="f_min" type="number" placeholder="0" /></div>
+      <div class="form-group"><label class="form-label">Safety Stock</label><input id="f_safety" type="number" placeholder="0" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Lead Time (hari)</label><input id="f_lead" type="number" placeholder="1" /></div>
+      <div class="form-group"><label class="form-label">Avg Daily Usage</label><input id="f_avg" type="number" placeholder="0" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Harga Beli (per satuan)</label><input id="f_hbeli" type="number" placeholder="0" /></div>
+      <div class="form-group"><label class="form-label">Harga Jual (0 = N/A)</label><input id="f_hjual" type="number" placeholder="0" /></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveBarang()">Simpan</button>
+      <button class="btn btn-outline" onclick="closeModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+<script>
+let activeTab = 'all';
+let editIdx = null;
+
+const katColors = {
+  'Bahan Baku': 'badge-info',
+  'Barang Jual': 'badge-success',
+  'Inventaris': 'badge-warning'
+};
+
+function filterTab(kat, el) {
+  activeTab = kat;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  const app = window.WarkopApp;
+  if (!app) return;
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+  const data = app.state.barang.filter(b =>
+    (activeTab === 'all' || b.kategori === activeTab) &&
+    (!q || b.nama.toLowerCase().includes(q) || b.id.toLowerCase().includes(q))
+  );
+  const isOwner = app.state.role === 'owner';
+  document.getElementById('barangBody').innerHTML = data.map((b, idx) => {
+    const rop = app.rop(b);
+    const st = app.stockStatus(b);
+    const stCls = st === 'reorder' ? 'badge-danger' : st === 'warning' ? 'badge-warning' : 'badge-success';
+    const stLbl = st === 'reorder' ? '⚠ Reorder' : st === 'warning' ? '⚡ Hampir Habis' : '✓ Aman';
+    return `<tr>
+      <td class="mono muted">${b.id}</td>
+      <td style="font-weight:600">${b.nama}</td>
+      <td><span class="badge ${katColors[b.kategori]}" style="font-size:10px">${b.kategori}</span></td>
+      <td class="muted" style="font-size:11px">${b.supplier}</td>
+      <td class="muted">${b.satuan}</td>
+      <td class="mono" style="color:${st==='reorder'?'var(--accent-red)':st==='warning'?'var(--accent-amber)':'var(--accent-green)'};font-weight:700">${app.fmtNum(b.stok)}</td>
+      <td class="mono muted">${app.fmtNum(b.min)}</td>
+      <td class="mono muted">${app.fmtNum(b.safety)}</td>
+      <td class="mono muted">${b.lead} hr</td>
+      <td class="mono" style="font-weight:600">${app.fmtNum(rop)}</td>
+      <td class="mono">${app.fmt(b.hBeli)}</td>
+      <td class="mono">${b.hJual ? app.fmt(b.hJual) : '—'}</td>
+      <td><span class="badge ${stCls}" style="font-size:10px">${stLbl}</span></td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="editBarang(${app.state.barang.indexOf(b)})" style="padding:4px 10px;font-size:11px">Edit</button>
+        ${isOwner ? `<button class="btn btn-sm" onclick="deleteBarang(${app.state.barang.indexOf(b)})" style="padding:4px 10px;font-size:11px;color:var(--accent-red)">✕</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="14" style="text-align:center;padding:24px;color:var(--text-muted)">Tidak ada data</td></tr>`;
+}
+
+function openModal(fill = null) {
+  const app = window.WarkopApp;
+  if (app.state.role !== 'owner') { app.toast('Hanya Owner yang dapat menambah barang!', 'error'); return; }
+  editIdx = null;
+  document.getElementById('modalTitle').textContent = 'Tambah Barang Baru';
+  ['f_id','f_nama','f_sup','f_satuan'].forEach(id => document.getElementById(id).value = fill?.[id] || '');
+  ['f_stok','f_min','f_safety','f_lead','f_avg','f_hbeli','f_hjual'].forEach(id => document.getElementById(id).value = 0);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function editBarang(idx) {
+  const app = window.WarkopApp;
+  const b = app.state.barang[idx];
+  editIdx = idx;
+  document.getElementById('modalTitle').textContent = 'Edit Barang: ' + b.nama;
+  document.getElementById('f_id').value = b.id;
+  document.getElementById('f_nama').value = b.nama;
+  document.getElementById('f_kat').value = b.kategori;
+  document.getElementById('f_sup').value = b.supplier;
+  document.getElementById('f_satuan').value = b.satuan;
+  document.getElementById('f_stok').value = b.stok;
+  document.getElementById('f_min').value = b.min;
+  document.getElementById('f_safety').value = b.safety;
+  document.getElementById('f_lead').value = b.lead;
+  document.getElementById('f_avg').value = b.avgDaily;
+  document.getElementById('f_hbeli').value = b.hBeli;
+  document.getElementById('f_hjual').value = b.hJual;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function saveBarang() {
+  const app = window.WarkopApp;
+  const newB = {
+    id: document.getElementById('f_id').value.trim().toUpperCase(),
+    nama: document.getElementById('f_nama').value.trim(),
+    kategori: document.getElementById('f_kat').value,
+    supplier: document.getElementById('f_sup').value.trim(),
+    satuan: document.getElementById('f_satuan').value.trim(),
+    stok: parseFloat(document.getElementById('f_stok').value) || 0,
+    min: parseFloat(document.getElementById('f_min').value) || 0,
+    safety: parseFloat(document.getElementById('f_safety').value) || 0,
+    lead: parseFloat(document.getElementById('f_lead').value) || 1,
+    avgDaily: parseFloat(document.getElementById('f_avg').value) || 0,
+    hBeli: parseFloat(document.getElementById('f_hbeli').value) || 0,
+    hJual: parseFloat(document.getElementById('f_hjual').value) || 0,
+  };
+  if (!newB.id || !newB.nama) { app.toast('ID dan Nama wajib diisi!', 'error'); return; }
+  if (editIdx !== null) {
+    app.state.barang[editIdx] = newB;
+    app.toast('Barang berhasil diperbarui ✓', 'success');
+  } else {
+    app.state.barang.push(newB);
+    app.toast('Barang ' + newB.nama + ' ditambahkan ✓', 'success');
+  }
+  closeModal();
+  renderTable();
+}
+
+function deleteBarang(idx) {
+  const app = window.WarkopApp;
+  if (app.state.role !== 'owner') { app.toast('Hanya Owner yang dapat menghapus!', 'error'); return; }
+  const nama = app.state.barang[idx].nama;
+  if (confirm(`Hapus barang "${nama}"?`)) {
+    app.state.barang.splice(idx, 1);
+    renderTable();
+    app.toast(nama + ' dihapus', 'warning');
+  }
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function closeModalOutside(e) { if (e.target.id === 'modalOverlay') closeModal(); }
+
+document.addEventListener('DOMContentLoaded', renderTable);
+</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/sync.js"></script>
+</body>
+</html>

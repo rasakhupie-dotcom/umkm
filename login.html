@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WarkopPOS — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base:      #0F0E0C;
+      --bg-surface:   #1A1916;
+      --bg-elevated:  #232018;
+      --border:       rgba(255,255,255,0.07);
+      --border-strong:rgba(255,255,255,0.14);
+      --text-primary: #F0EDE6;
+      --text-secondary:#8C8880;
+      --text-muted:   #5C5850;
+      --accent-green: #1D9E75;
+      --accent-red:   #DC2626;
+      --accent-amber: #D97706;
+      --font-sans:    'Plus Jakarta Sans', sans-serif;
+      --font-mono:    'Space Mono', monospace;
+      --radius:       10px;
+      --radius-lg:    14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background coffee pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 80%, rgba(59,30,15,.4) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 80% 20%, rgba(29,158,117,.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .login-wrap {
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* BRAND */
+    .brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .brand-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, #3D2B1F, #6B4226);
+      border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px;
+      margin: 0 auto 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.06);
+    }
+    .brand-name {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: 0.04em;
+      display: block;
+    }
+    .brand-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* CARD */
+    .login-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+    .card-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* ROLE SELECTOR */
+    .role-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: var(--bg-elevated);
+      padding: 4px;
+      border-radius: var(--radius);
+    }
+    .role-tab {
+      padding: 10px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .role-tab .tab-icon { font-size: 16px; }
+    .role-tab.active {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.08);
+    }
+    .role-tab.active.owner { color: var(--accent-green); }
+    .role-tab.active.karyawan { color: #93C5FD; }
+
+    /* FORM */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 7px;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-wrap input {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 12px 44px 12px 14px;
+      font-size: 14px;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .input-wrap input:focus {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 0 3px rgba(29,158,117,.15);
+    }
+    .input-wrap input.error {
+      border-color: var(--accent-red);
+      box-shadow: 0 0 0 3px rgba(220,38,38,.15);
+    }
+    .input-icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* ALERT */
+    .alert {
+      padding: 11px 14px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .alert.show { display: flex; }
+    .alert.error { background: rgba(220,38,38,.12); border: 1px solid rgba(220,38,38,.25); color: #F87171; }
+    .alert.warning { background: rgba(217,119,6,.12); border: 1px solid rgba(217,119,6,.25); color: #FCD34D; }
+    .alert.success { background: rgba(29,158,117,.12); border: 1px solid rgba(29,158,117,.25); color: #5AC99A; }
+
+    /* BUTTON */
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent-green);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
+      margin-top: 8px;
+    }
+    .btn-login:hover { background: #15875F; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(29,158,117,.3); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* DEFAULT CREDS HINT */
+    .creds-hint {
+      margin-top: 20px;
+      padding: 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .creds-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .cred-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cred-row:last-child { border-bottom: none; }
+    .cred-role {
+      width: 80px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .cred-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .cred-btn:hover { border-color: var(--accent-green); color: var(--text-primary); }
+    .cred-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    /* LOCKOUT TIMER */
+    .lockout-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(220,38,38,.08);
+      border: 1px solid rgba(220,38,38,.2);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: #F87171;
+      margin-bottom: 14px;
+    }
+    .lockout-bar.show { display: flex; }
+
+    /* SPINNER */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<div class="login-wrap">
+  <!-- BRAND -->
+  <div class="brand">
+    <div class="brand-icon">☕</div>
+    <span class="brand-name">WarkopPOS</span>
+    <span class="brand-sub">Sistem Stok Opname & Kasir</span>
+  </div>
+
+  <!-- LOGIN CARD -->
+  <div class="login-card">
+    <div class="card-title">Masuk ke Sistem</div>
+    <div class="card-sub">Pilih role, masukkan username dan password kamu.</div>
+
+    <!-- ROLE SELECTOR -->
+    <div class="role-tabs">
+      <button class="role-tab active owner" id="tabOwner" onclick="selectRole('owner')">
+        <span class="tab-icon">👑</span> Owner
+      </button>
+      <button class="role-tab karyawan" id="tabKaryawan" onclick="selectRole('karyawan')">
+        <span class="tab-icon">👤</span> Karyawan
+      </button>
+    </div>
+
+    <!-- LOCKOUT NOTICE -->
+    <div class="lockout-bar" id="lockoutBar">
+      🔒 <span id="lockoutMsg">Terlalu banyak percobaan. Coba lagi dalam <span id="lockoutTimer">—</span> detik.</span>
+    </div>
+
+    <!-- ERROR ALERT -->
+    <div class="alert error" id="alertBox">
+      <span id="alertIcon">⚠</span>
+      <span id="alertMsg">—</span>
+    </div>
+
+    <!-- FORM -->
+    <form onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <div class="input-wrap">
+          <input type="text" id="usernameInput" placeholder="Masukkan username"
+            autocomplete="username" autocapitalize="none" spellcheck="false" required />
+          <span class="input-icon">👤</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="passwordInput" placeholder="Masukkan password"
+            autocomplete="current-password" required />
+          <span class="input-icon" id="togglePwd" onclick="togglePassword()" title="Tampilkan/sembunyikan password">👁</span>
+        </div>
+      </div>
+
+      <!-- SOURCE INDICATOR -->
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;font-size:11px;color:#5C5850;">
+        <span id="apiSourceDot" style="width:7px;height:7px;border-radius:50%;background:#5C5850;flex-shrink:0;"></span>
+        <span id="apiSourceLabel">Mengecek koneksi Google Sheets...</span>
+      </div>
+      <button type="submit" class="btn-login" id="loginBtn">
+        <div class="spinner" id="loginSpinner"></div>
+        <span id="loginBtnText">Masuk →</span>
+      </button>
+    </form>
+
+    <!-- DEFAULT CREDS HINT -->
+    <div class="creds-hint" id="credsHint">
+      <div class="creds-title">Default Login (Pertama Kali)</div>
+      <div class="cred-row">
+        <span class="cred-role">Owner</span>
+        <button class="cred-btn" onclick="fillCreds('owner','owner123')">
+          <span class="cred-dot" style="background:var(--accent-green)"></span>
+          owner / owner123
+        </button>
+      </div>
+      <div class="cred-row">
+        <span class="cred-role">Karyawan</span>
+        <button class="cred-btn" onclick="fillCreds('karyawan1','karyawan123')">
+          <span class="cred-dot" style="background:#93C5FD"></span>
+          karyawan1 / karyawan123
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Setelah login pertama, segera ganti password default.<br>
+    Sesi akan berakhir otomatis setelah 8 jam tidak aktif.
+  </div>
+</div>
+
+<!-- MODAL GANTI PASSWORD -->
+<div id="changePwdOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1A1916;border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:28px;width:400px;max-width:100%;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px;color:#F0EDE6;">🔐 Ganti Password Default</div>
+    <div style="font-size:12px;color:#8C8880;margin-bottom:20px;line-height:1.6;">
+      Untuk keamanan, kamu wajib mengganti password default sebelum melanjutkan.
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8C8880;display:block;margin-bottom:6px;">Password Baru</label>
+      <input type="password" id="newPwd1" placeholder="Min. 6 karakter"
+        style="width:100%;background:#232018;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:11px 14px;font-size:14px;color:#F0EDE6;font-family:inherit;outline:none;" />
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8C8880;display:block;margin-bottom:6px;">Konfirmasi Password</label>
+      <input type="password" id="newPwd2" placeholder="Ulangi password baru"
+        style="width:100%;background:#232018;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:11px 14px;font-size:14px;color:#F0EDE6;font-family:inherit;outline:none;" />
+    </div>
+    <div id="changePwdAlert" style="display:none;padding:10px 12px;border-radius:8px;font-size:12px;font-weight:600;margin-bottom:12px;"></div>
+    <button onclick="submitChangePwd()"
+      style="width:100%;padding:12px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+      Simpan Password Baru →
+    </button>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+  let selectedRole = 'owner';
+  let pendingSession = null;
+  let lockoutInterval = null;
+
+  // Jika sudah login, langsung ke dashboard
+  if (window.WarkopAuth.isLoggedIn()) {
+    window.location.href = 'index.html';
+  }
+
+  function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('tabOwner').className = 'role-tab' + (role === 'owner' ? ' active owner' : '');
+    document.getElementById('tabKaryawan').className = 'role-tab' + (role === 'karyawan' ? ' active karyawan' : '');
+    // Auto-fill username hint
+    const uInput = document.getElementById('usernameInput');
+    if (!uInput.value) {
+      uInput.value = role === 'owner' ? 'owner' : 'karyawan1';
+    }
+    hideAlert();
+  }
+
+  function fillCreds(user, pass) {
+    document.getElementById('usernameInput').value = user;
+    document.getElementById('passwordInput').value = pass;
+    selectedRole = user === 'owner' ? 'owner' : 'karyawan';
+    selectRole(selectedRole);
+    hideAlert();
+  }
+
+  function togglePassword() {
+    const input = document.getElementById('passwordInput');
+    const icon = document.getElementById('togglePwd');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      icon.textContent = '👁';
+    }
+  }
+
+  function showAlert(msg, type = 'error') {
+    const box = document.getElementById('alertBox');
+    box.className = 'alert ' + type + ' show';
+    document.getElementById('alertMsg').textContent = msg;
+  }
+  function hideAlert() {
+    document.getElementById('alertBox').classList.remove('show');
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('loginBtn');
+    const spinner = document.getElementById('loginSpinner');
+    const txt = document.getElementById('loginBtnText');
+    btn.disabled = on;
+    spinner.style.display = on ? 'block' : 'none';
+    txt.textContent = on ? 'Memverifikasi...' : 'Masuk →';
+  }
+
+  function startLockoutTimer(seconds) {
+    const bar = document.getElementById('lockoutBar');
+    const timerEl = document.getElementById('lockoutTimer');
+    bar.classList.add('show');
+    document.getElementById('loginBtn').disabled = true;
+    let s = seconds;
+    timerEl.textContent = s;
+    clearInterval(lockoutInterval);
+    lockoutInterval = setInterval(() => {
+      s--;
+      timerEl.textContent = s;
+      if (s <= 0) {
+        clearInterval(lockoutInterval);
+        bar.classList.remove('show');
+        document.getElementById('loginBtn').disabled = false;
+      }
+    }, 1000);
+  }
+
+  async function doLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('usernameInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+    hideAlert();
+
+    if (!username || !password) {
+      showAlert('Username dan password wajib diisi.');
+      return;
+    }
+
+    // Cek lockout
+    const lockSec = window.WarkopAuth.isLockedOut(username);
+    if (lockSec > 0) {
+      startLockoutTimer(lockSec);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await window.WarkopAuth.login(username, password);
+      if (!result.ok) {
+        showAlert(result.error);
+        // Cek apakah sekarang terkunci
+        const newLock = window.WarkopAuth.isLockedOut(username);
+        if (newLock > 0) startLockoutTimer(newLock);
+        return;
+      }
+
+      window.WarkopAuth.resetFailedAttempts(username);
+      pendingSession = result;
+
+      if (result.mustChangePassword) {
+        // Wajib ganti password
+        document.getElementById('changePwdOverlay').style.display = 'flex';
+      } else {
+        // Langsung masuk
+        window.location.href = 'index.html';
+      }
+    } catch (err) {
+      showAlert('Terjadi kesalahan sistem. Coba lagi.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitChangePwd() {
+    const p1 = document.getElementById('newPwd1').value;
+    const p2 = document.getElementById('newPwd2').value;
+    const alertEl = document.getElementById('changePwdAlert');
+
+    const showErr = (msg) => {
+      alertEl.style.display = 'block';
+      alertEl.style.background = 'rgba(220,38,38,.12)';
+      alertEl.style.border = '1px solid rgba(220,38,38,.25)';
+      alertEl.style.color = '#F87171';
+      alertEl.textContent = msg;
+    };
+
+    if (p1.length < 6) { showErr('Password minimal 6 karakter.'); return; }
+    if (p1 !== p2) { showErr('Password tidak cocok.'); return; }
+
+    const defaultPass = pendingSession?.user?.role === 'owner' ? 'owner123' : 'karyawan123';
+    const result = await window.WarkopAuth.changePassword(
+      pendingSession.session.username, defaultPass, p1
+    );
+
+    // Jika default pass sudah diubah sebelumnya, coba dengan hash baru
+    if (!result.ok) {
+      // Coba login ulang dengan password lama
+      alertEl.style.display = 'block';
+      alertEl.style.background = 'rgba(217,119,6,.12)';
+      alertEl.style.border = '1px solid rgba(217,119,6,.25)';
+      alertEl.style.color = '#FCD34D';
+      alertEl.textContent = 'Masukkan password lama dulu di halaman login untuk konfirmasi.';
+      setTimeout(() => {
+        document.getElementById('changePwdOverlay').style.display = 'none';
+        window.location.href = 'index.html';
+      }, 2000);
+      return;
+    }
+
+    alertEl.style.display = 'block';
+    alertEl.style.background = 'rgba(29,158,117,.12)';
+    alertEl.style.border = '1px solid rgba(29,158,117,.25)';
+    alertEl.style.color = '#5AC99A';
+    alertEl.textContent = '✅ Password berhasil diubah!';
+    setTimeout(() => {
+      document.getElementById('changePwdOverlay').style.display = 'none';
+      window.location.href = 'index.html';
+    }, 1200);
+  }
+</script>
+
+<script>
+  // Cek apakah Google Sheets API tersedia
+  (function() {
+    var url = localStorage.getItem('warkop_api_url');
+    var dot = document.getElementById('apiSourceDot');
+    var label = document.getElementById('apiSourceLabel');
+    if (!dot || !label) return;
+    if (!url) {
+      dot.style.background = '#5C5850';
+      label.textContent = 'Mode Lokal — hubungkan Google Sheets untuk multi-device';
+      return;
+    }
+    dot.style.background = '#D97706';
+    label.textContent = 'Menghubungi Google Sheets...';
+    fetch(url + '?action=pingAuth', { redirect: 'follow' })
+      .then(r => r.json())
+      .then(j => {
+        if (j.ok) {
+          dot.style.background = '#1D9E75';
+          dot.style.boxShadow = '0 0 6px #1D9E75';
+          label.textContent = 'Google Sheets terhubung — login multi-device aktif ✓';
+          label.style.color = '#1D9E75';
+        } else {
+          dot.style.background = '#D97706';
+          label.textContent = 'Sheets tidak merespons — login lokal';
+        }
+      })
+      .catch(() => {
+        dot.style.background = '#5C5850';
+        label.textContent = 'Offline — login lokal';
+      });
+  })();
+</script>
+
+</body>
+</html>

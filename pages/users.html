@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WarkopPOS — Manajemen User</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;padding:20px;}
+    .modal-overlay.open{opacity:1;pointer-events:all;}
+    .modal{background:var(--bg-surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:28px;width:460px;max-width:100%;transform:translateY(20px);transition:transform .25s;}
+    .modal-overlay.open .modal{transform:translateY(0);}
+    .user-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .strength-bar{height:4px;border-radius:999px;margin-top:6px;transition:width .3s,background .3s;}
+  </style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">☕</div><div class="brand-text"><span class="brand-name">WarkopPOS</span><span class="brand-sub">Stok Opname System</span></div></div>
+  <div class="role-pill" id="rolePill"><span class="role-dot"></span><span id="roleLabel">Owner</span></div>
+  <nav class="nav">
+    <div class="nav-section">Utama</div>
+    <a href="../index.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg>Dashboard</a>
+    <a href="pos.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>Kasir POS</a>
+    <a href="opname.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/></svg>Stok Opname</a>
+    <div class="nav-section">Manajemen</div>
+    <a href="barang.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clip-rule="evenodd"/></svg>Master Barang</a>
+    <a href="bom.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>Bill of Material</a>
+    <div class="nav-section">Laporan</div>
+    <a href="reorder.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>Reorder Point</a>
+    <a href="laporan.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6z" clip-rule="evenodd"/></svg>Laporan Harian</a>
+    <div class="nav-section">Sistem</div>
+    <a href="users.html" class="nav-link active owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>Manajemen User</a>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync</a>
+  </nav>
+  <div class="sidebar-footer"></div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="window.WarkopApp?.toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1 class="page-title">Manajemen User</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-display" id="clockDisplay">—</div>
+      <button class="btn btn-sm btn-primary" onclick="openAddModal()">+ Tambah User</button>
+    </div>
+  </header>
+
+  <div class="page-content">
+    <!-- METRICS -->
+    <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;" data-animate="fade-up">
+      <div class="metric-card metric-green"><div class="metric-label">Total User</div><div class="metric-value" id="cntTotal">—</div></div>
+      <div class="metric-card metric-blue"><div class="metric-label">Owner</div><div class="metric-value" id="cntOwner">—</div></div>
+      <div class="metric-card metric-amber"><div class="metric-label">Karyawan</div><div class="metric-value" id="cntKaryawan">—</div></div>
+    </div>
+
+    <!-- USER TABLE -->
+    <div class="card" data-animate="fade-up">
+      <div class="card-header">
+        <h2 class="card-title">Daftar Akun</h2>
+        <span style="font-size:11px;color:var(--text-muted);">Password tersimpan terenkripsi (SHA-256)</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th>User</th><th>Username</th><th>Role</th><th>Status</th><th>Wajib Ganti PW</th><th>Dibuat</th><th>Aksi</th></tr>
+        </thead>
+        <tbody id="userBody"></tbody>
+      </table>
+    </div>
+
+    <!-- CHANGE MY PASSWORD -->
+    <div class="card" style="margin-top:14px;" data-animate="fade-up">
+      <div class="card-header"><h2 class="card-title">🔐 Ganti Password Saya</h2></div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Password Lama</label><input type="password" id="myOldPwd" placeholder="Password saat ini"/></div>
+        <div class="form-group"><label class="form-label">Password Baru</label>
+          <input type="password" id="myNewPwd" placeholder="Min. 6 karakter" oninput="checkStrength(this.value)"/>
+          <div id="strengthBar" class="strength-bar" style="width:0%;background:var(--accent-red);"></div>
+          <div id="strengthLabel" style="font-size:10px;color:var(--text-muted);margin-top:3px;"></div>
+        </div>
+      </div>
+      <div class="form-group" style="max-width:300px;margin-bottom:12px;">
+        <label class="form-label">Konfirmasi Password Baru</label>
+        <input type="password" id="myNewPwd2" placeholder="Ulangi password baru"/>
+      </div>
+      <div id="myPwdAlert" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;margin-bottom:12px;max-width:400px;"></div>
+      <button class="btn btn-primary" onclick="changeMyPwd()">Simpan Password Baru</button>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL TAMBAH USER -->
+<div class="modal-overlay" id="addModal" onclick="closeModalOutside(event,'addModal')">
+  <div class="modal">
+    <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:18px;" id="modalTitle">Tambah User Baru</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Nama Lengkap</label><input id="f_nama" placeholder="Nama karyawan"/></div>
+      <div class="form-group"><label class="form-label">Username</label><input id="f_username" placeholder="Tidak boleh ada spasi" oninput="this.value=this.value.toLowerCase().replace(/\s/g,'')"/></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label class="form-label">Role</label>
+      <select id="f_role">
+        <option value="karyawan">👤 Karyawan</option>
+        <option value="owner">👑 Owner</option>
+      </select>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Password</label><input type="password" id="f_pwd" placeholder="Min. 6 karakter"/></div>
+      <div class="form-group"><label class="form-label">Konfirmasi</label><input type="password" id="f_pwd2" placeholder="Ulangi password"/></div>
+    </div>
+    <div style="background:var(--bg-elevated);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">
+      User baru akan diminta ganti password saat pertama kali login.
+    </div>
+    <div id="addAlert" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="saveNewUser()">Simpan User</button>
+      <button class="btn btn-outline" onclick="closeModal('addModal')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESET PASSWORD -->
+<div class="modal-overlay" id="resetModal" onclick="closeModalOutside(event,'resetModal')">
+  <div class="modal">
+    <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Reset Password User</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">User akan diminta ganti password saat login berikutnya.</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:14px;" id="resetTargetName">—</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Password Baru</label><input type="password" id="r_pwd" placeholder="Min. 6 karakter"/></div>
+      <div class="form-group"><label class="form-label">Konfirmasi</label><input type="password" id="r_pwd2" placeholder="Ulangi"/></div>
+    </div>
+    <div id="resetAlert" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="doResetPwd()">Reset Password</button>
+      <button class="btn btn-outline" onclick="closeModal('resetModal')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/app.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+// Auth guard — hanya owner
+document.addEventListener('DOMContentLoaded', () => {
+  if (!window.WarkopAuth.guard('owner')) return;
+  renderUsers();
+  updateClock();
+  setInterval(updateClock, 1000);
+});
+
+function updateClock() {
+  const el = document.getElementById('clockDisplay');
+  if (el) el.textContent = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+async function renderUsers() {
+  const users = await window.WarkopAuth.getUsers();
+  const session = window.WarkopAuth.getCurrentUser();
+  document.getElementById('cntTotal').textContent = users.filter(u=>u.aktif).length;
+  document.getElementById('cntOwner').textContent = users.filter(u=>u.role==='owner').length;
+  document.getElementById('cntKaryawan').textContent = users.filter(u=>u.role==='karyawan').length;
+
+  document.getElementById('userBody').innerHTML = users.map(u => {
+    const isMe = u.id === session?.userId;
+    const roleCls = u.role === 'owner' ? 'badge-success' : 'badge-info';
+    const statusCls = u.aktif ? 'badge-success' : 'badge-danger';
+    const avatarBg = u.role === 'owner' ? '#1D2A1F' : '#1A2030';
+    const avatarColor = u.role === 'owner' ? '#1D9E75' : '#93C5FD';
+    const avatarIcon = u.role === 'owner' ? '👑' : '👤';
+    const createdDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}) : '—';
+
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="user-avatar" style="background:${avatarBg};color:${avatarColor};">${avatarIcon}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px;">${u.nama} ${isMe ? '<span class="badge badge-gray" style="font-size:9px;margin-left:4px;">Kamu</span>' : ''}</div>
+          </div>
+        </div>
+      </td>
+      <td class="mono" style="font-size:12px;">${u.username}</td>
+      <td><span class="badge ${roleCls}" style="font-size:10px;">${u.role === 'owner' ? '👑 Owner' : '👤 Karyawan'}</span></td>
+      <td>
+        <button onclick="toggleStatus('${u.id}')" style="background:none;border:none;cursor:pointer;padding:0;">
+          <span class="badge ${statusCls}" style="font-size:10px;">${u.aktif ? '✓ Aktif' : '✗ Nonaktif'}</span>
+        </button>
+      </td>
+      <td>${u.mustChangePassword ? '<span style="color:var(--accent-amber);font-size:12px;">⚠ Ya</span>' : '<span style="color:var(--accent-green);font-size:12px;">✓ Tidak</span>'}</td>
+      <td class="muted mono" style="font-size:11px;">${createdDate}</td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm btn-outline" onclick="openResetModal('${u.username}','${u.nama}')" style="padding:4px 10px;font-size:11px;">🔑 Reset PW</button>
+          ${!isMe ? `<button class="btn btn-sm" onclick="toggleStatus('${u.id}')" style="padding:4px 10px;font-size:11px;color:${u.aktif?'var(--accent-red)':'var(--accent-green)'};">${u.aktif?'Nonaktifkan':'Aktifkan'}</button>` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddModal() {
+  ['f_nama','f_username','f_pwd','f_pwd2'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f_role').value = 'karyawan';
+  document.getElementById('addAlert').style.display = 'none';
+  document.getElementById('addModal').classList.add('open');
+}
+
+let resetTargetUsername = '';
+function openResetModal(username, nama) {
+  resetTargetUsername = username;
+  document.getElementById('resetTargetName').textContent = `User: ${nama} (@${username})`;
+  document.getElementById('r_pwd').value = '';
+  document.getElementById('r_pwd2').value = '';
+  document.getElementById('resetAlert').style.display = 'none';
+  document.getElementById('resetModal').classList.add('open');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModalOutside(e, id) { if (e.target.id === id) closeModal(id); }
+
+async function saveNewUser() {
+  const nama = document.getElementById('f_nama').value.trim();
+  const username = document.getElementById('f_username').value.trim();
+  const role = document.getElementById('f_role').value;
+  const pwd = document.getElementById('f_pwd').value;
+  const pwd2 = document.getElementById('f_pwd2').value;
+  const alertEl = document.getElementById('addAlert');
+
+  const showErr = (msg) => {
+    alertEl.style.display = 'block';
+    alertEl.style.background = 'rgba(220,38,38,.12)';
+    alertEl.style.border = '1px solid rgba(220,38,38,.25)';
+    alertEl.style.color = '#F87171';
+    alertEl.textContent = msg;
+  };
+
+  if (!nama || !username || !pwd) { showErr('Semua field wajib diisi!'); return; }
+  if (pwd.length < 6) { showErr('Password minimal 6 karakter.'); return; }
+  if (pwd !== pwd2) { showErr('Password tidak cocok.'); return; }
+
+  const result = await window.WarkopAuth.addUser({ nama, username, password: pwd, role });
+  if (!result.ok) { showErr(result.error); return; }
+
+  closeModal('addModal');
+  renderUsers();
+  toast(`✅ User ${nama} berhasil ditambahkan!`, 'success');
+}
+
+async function doResetPwd() {
+  const pwd = document.getElementById('r_pwd').value;
+  const pwd2 = document.getElementById('r_pwd2').value;
+  const alertEl = document.getElementById('resetAlert');
+  const showErr = (msg) => {
+    alertEl.style.display = 'block';
+    alertEl.style.background = 'rgba(220,38,38,.12)';
+    alertEl.style.border = '1px solid rgba(220,38,38,.25)';
+    alertEl.style.color = '#F87171';
+    alertEl.textContent = msg;
+  };
+  if (pwd.length < 6) { showErr('Min. 6 karakter.'); return; }
+  if (pwd !== pwd2) { showErr('Password tidak cocok.'); return; }
+  const result = await window.WarkopAuth.resetPasswordByOwner(resetTargetUsername, pwd);
+  if (!result.ok) { showErr(result.error); return; }
+  closeModal('resetModal');
+  renderUsers();
+  toast(`✅ Password @${resetTargetUsername} berhasil direset!`, 'success');
+}
+
+async function toggleStatus(userId) {
+  const result = await window.WarkopAuth.toggleUserStatus(userId);
+  if (!result.ok) { toast(result.error, 'error'); return; }
+  renderUsers();
+  toast(result.aktif ? 'User diaktifkan ✓' : 'User dinonaktifkan', result.aktif ? 'success' : 'warning');
+}
+
+function checkStrength(pwd) {
+  const bar = document.getElementById('strengthBar');
+  const label = document.getElementById('strengthLabel');
+  let score = 0;
+  if (pwd.length >= 6) score++;
+  if (pwd.length >= 10) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  const levels = [
+    {w:'0%',   c:'var(--accent-red)',   l:''},
+    {w:'20%',  c:'var(--accent-red)',   l:'Sangat Lemah'},
+    {w:'40%',  c:'var(--accent-amber)', l:'Lemah'},
+    {w:'60%',  c:'var(--accent-amber)', l:'Cukup'},
+    {w:'80%',  c:'var(--accent-green)', l:'Kuat'},
+    {w:'100%', c:'var(--accent-green)', l:'Sangat Kuat'},
+  ];
+  const lv = levels[score] || levels[0];
+  bar.style.width = lv.w;
+  bar.style.background = lv.c;
+  label.textContent = lv.l;
+  label.style.color = lv.c;
+}
+
+async function changeMyPwd() {
+  const session = window.WarkopAuth.getCurrentUser();
+  const old = document.getElementById('myOldPwd').value;
+  const n1 = document.getElementById('myNewPwd').value;
+  const n2 = document.getElementById('myNewPwd2').value;
+  const alertEl = document.getElementById('myPwdAlert');
+
+  const show = (msg, ok) => {
+    alertEl.style.display = 'block';
+    alertEl.style.background = ok ? 'rgba(29,158,117,.12)' : 'rgba(220,38,38,.12)';
+    alertEl.style.border = `1px solid ${ok ? 'rgba(29,158,117,.25)' : 'rgba(220,38,38,.25)'}`;
+    alertEl.style.color = ok ? '#5AC99A' : '#F87171';
+    alertEl.textContent = msg;
+  };
+
+  if (!old || !n1 || !n2) { show('Semua field wajib diisi.', false); return; }
+  if (n1.length < 6) { show('Password baru min. 6 karakter.', false); return; }
+  if (n1 !== n2) { show('Konfirmasi password tidak cocok.', false); return; }
+  if (n1 === old) { show('Password baru tidak boleh sama dengan yang lama.', false); return; }
+
+  const result = await window.WarkopAuth.changePassword(session.username, old, n1);
+  if (!result.ok) { show(result.error, false); return; }
+  show('✅ Password berhasil diubah!', true);
+  document.getElementById('myOldPwd').value = '';
+  document.getElementById('myNewPwd').value = '';
+  document.getElementById('myNewPwd2').value = '';
+  document.getElementById('strengthBar').style.width = '0%';
+  document.getElementById('strengthLabel').textContent = '';
+}
+</script>
+</body>
+</html>

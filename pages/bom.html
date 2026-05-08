@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarkopPOS — Bill of Material</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .bom-item { display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px; }
+    .bom-item-name { font-size:13px;font-weight:600;color:var(--text-primary); }
+    .bom-item-qty  { font-family:var(--font-mono);font-size:12px;color:var(--accent-green); }
+    .bom-item-cost { font-family:var(--font-mono);font-size:11px;color:var(--text-muted); }
+    .bom-item-del  { background:none;border:none;color:var(--accent-red);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px; }
+    .bom-item-del:hover { background:rgba(220,38,38,.12); }
+    .margin-pill { display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.25);border-radius:var(--radius);margin-top:12px; }
+    .locked-notice { display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;color:var(--text-muted); }
+    .locked-notice .lock-icon { font-size:48px;margin-bottom:16px;opacity:.4; }
+    .locked-notice h3 { font-size:16px;color:var(--text-secondary);margin-bottom:8px; }
+  </style>
+<script>
+  // Auth Guard — redirect ke login jika belum login
+  (function() {
+    var s = sessionStorage.getItem('warkop_session');
+    if (!s) { window.location.href = '../login.html'; return; }
+    try { var sess = JSON.parse(s); if (Date.now() > sess.expiresAt) { sessionStorage.removeItem('warkop_session'); window.location.href = '../login.html'; } }
+    catch(e) { window.location.href = '../login.html'; }
+  })();
+</script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">☕</div><div class="brand-text"><span class="brand-name">WarkopPOS</span><span class="brand-sub">Stok Opname System</span></div></div>
+  <div class="role-pill" id="rolePill"><span class="role-dot"></span><span id="roleLabel">Owner</span></div>
+  <nav class="nav">
+    <div class="nav-section">Utama</div>
+    <a href="../index.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg>Dashboard</a>
+    <a href="pos.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>Kasir POS</a>
+    <a href="opname.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/></svg>Stok Opname</a>
+    <div class="nav-section">Manajemen</div>
+    <a href="barang.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clip-rule="evenodd"/></svg>Master Barang</a>
+    <a href="bom.html" class="nav-link active owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>Bill of Material</a>
+    <a href="supplier.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/><path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H11a1 1 0 001-1v-1h2.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1V8a1 1 0 00-.293-.707l-2-2A1 1 0 0017 5h-3a1 1 0 00-1 1v3H3V4z"/></svg>Supplier</a>
+    <div class="nav-section">Laporan</div>
+    <a href="reorder.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>Reorder Point<span class="nav-badge danger">3</span></a>
+    <a href="pareto.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>Analisis Pareto</a>
+    <a href="laporan.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>Laporan Harian</a>
+  </nav>
+      <div class="nav-section">Sistem</div>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Manajemen User</a>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync</a>
+  <div class="sidebar-footer"><select id="roleSwitch" onchange="window.WarkopApp.switchRole(this.value)"><option value="owner">🔑 Login: Owner</option><option value="karyawan">👤 Login: Karyawan</option></select></div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="window.WarkopApp.toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1 class="page-title">Bill of Material (BOM)</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-display" id="clockDisplay">—</div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span id="syncStatus" style="font-size:10px;font-weight:700;color:var(--accent-amber);cursor:pointer;"
+          onclick="window.WarkopSync?.showConfigModal()" title="Klik untuk konfigurasi sync">
+          ○ Belum terhubung
+        </span>
+        <span id="lastSync" style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);">Klik untuk setup</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-content" id="pageContent">
+    <!-- Rendered by JS based on role -->
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+<script>
+let activeBOM = 0; // index in menus array
+let bomEdits = {}; // local copy of bom edits
+
+function initPage() {
+  const app = window.WarkopApp;
+  const content = document.getElementById('pageContent');
+  if (app.state.role !== 'owner') {
+    content.innerHTML = `<div class="locked-notice">
+      <div class="lock-icon">🔒</div>
+      <h3>Akses Terbatas</h3>
+      <p>Halaman Bill of Material hanya dapat diakses oleh Owner.</p>
+    </div>`;
+    return;
+  }
+  content.innerHTML = `
+    <div class="grid-2" style="align-items:start">
+      <div>
+        <div class="card" style="margin-bottom:14px;" data-animate="fade-up" style="--delay:0ms">
+          <div class="card-header">
+            <h2 class="card-title">Pilih Menu</h2>
+            <button class="btn btn-sm btn-primary" onclick="addNewMenu()">+ Menu Baru</button>
+          </div>
+          <div id="menuList"></div>
+        </div>
+        <div class="card" data-animate="fade-up" style="--delay:60ms">
+          <div class="card-header">
+            <h2 class="card-title">Ringkasan HPP Semua Menu</h2>
+          </div>
+          <table class="data-table" id="hppSummary"></table>
+        </div>
+      </div>
+      <div class="card" id="bomDetail" data-animate="fade-up" style="--delay:120ms">
+        <!-- BOM detail rendered here -->
+      </div>
+    </div>
+  `;
+  renderMenuList();
+  renderBOMDetail();
+  renderHPPSummary();
+  document.querySelectorAll('[data-animate]').forEach(el => setTimeout(() => el.classList.add('visible'), 50));
+}
+
+function renderMenuList() {
+  const app = window.WarkopApp;
+  document.getElementById('menuList').innerHTML = app.state.menus.map((m, i) => {
+    const hpp = app.calcHPP(m.id);
+    const margin = m.harga > 0 ? ((m.harga - hpp) / m.harga * 100).toFixed(1) : 0;
+    return `<div onclick="selectMenu(${i})" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid ${i===activeBOM?'var(--accent-green)':'var(--border)'};background:${i===activeBOM?'rgba(29,158,117,.08)':'var(--bg-elevated)'};margin-bottom:6px;transition:all .15s;">
+      <span style="font-size:22px">${m.emoji}</span>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:13px;color:var(--text-primary)">${m.nama}</div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${app.fmt(m.harga)} · HPP ${app.fmt(hpp)} · Margin ${margin}%</div>
+      </div>
+      <span style="font-size:10px;color:${i===activeBOM?'var(--accent-green)':'var(--text-muted)'}">▶</span>
+    </div>`;
+  }).join('');
+}
+
+function selectMenu(i) {
+  activeBOM = i;
+  renderMenuList();
+  renderBOMDetail();
+}
+
+function renderBOMDetail() {
+  const app = window.WarkopApp;
+  const menu = app.state.menus[activeBOM];
+  if (!menu) return;
+  const hpp = app.calcHPP(menu.id);
+  const margin = menu.harga > 0 ? ((menu.harga - hpp) / menu.harga * 100).toFixed(1) : 0;
+
+  const bomItems = menu.bom.map((b, bi) => {
+    const item = app.state.barang.find(i => i.id === b.barang);
+    if (!item) return '';
+    const cost = item.hBeli * b.qty;
+    return `<div class="bom-item">
+      <div>
+        <div class="bom-item-name">${item.nama}</div>
+        <div class="bom-item-cost">${app.fmt(item.hBeli)}/${item.satuan} × ${b.qty} = ${app.fmt(cost)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="bom-item-qty">${b.qty} ${item.satuan}</span>
+        <button class="bom-item-del" onclick="removeBOM(${bi})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('bomDetail').innerHTML = `
+    <div class="card-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:24px">${menu.emoji}</span>
+        <div>
+          <h2 class="card-title">${menu.nama}</h2>
+          <div style="font-size:11px;color:var(--text-muted)">Harga jual: ${app.fmt(menu.harga)}</div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="saveBOM()">Simpan BOM</button>
+    </div>
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text-secondary)">
+      Setiap penjualan menu ini akan otomatis mengurangi stok bahan berikut:
+    </div>
+    <div id="bomItems">${bomItems || '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Belum ada bahan baku</div>'}</div>
+
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Tambah Bahan</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Pilih Bahan Baku</label>
+          <select id="addBahanSel">
+            ${app.state.barang.filter(b => b.kategori !== 'Barang Jual').map(b => `<option value="${b.id}">${b.nama} (${b.satuan})</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jumlah per Porsi</label>
+          <input type="number" id="addBahanQty" placeholder="0" min="0" step="0.01" />
+        </div>
+      </div>
+      <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:4px" onclick="addBOM()">+ Tambah Bahan ke BOM</button>
+    </div>
+
+    <div class="margin-pill">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted)">Total HPP per Porsi</div>
+        <div style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:var(--text-primary)">${app.fmt(hpp)}</div>
+      </div>
+      <div style="width:1px;height:36px;background:var(--border-strong)"></div>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted)">Margin Keuntungan</div>
+        <div style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:${parseFloat(margin)>=30?'var(--accent-green)':'var(--accent-amber)'}">${margin}%</div>
+      </div>
+    </div>
+  `;
+}
+
+function addBOM() {
+  const app = window.WarkopApp;
+  const sel = document.getElementById('addBahanSel').value;
+  const qty = parseFloat(document.getElementById('addBahanQty').value);
+  if (!sel || !qty || qty <= 0) { app.toast('Pilih bahan dan isi jumlah!', 'error'); return; }
+  const menu = app.state.menus[activeBOM];
+  const existing = menu.bom.find(b => b.barang === sel);
+  if (existing) { existing.qty += qty; }
+  else { menu.bom.push({ barang: sel, qty }); }
+  renderBOMDetail();
+  renderMenuList();
+  renderHPPSummary();
+  app.toast('Bahan ditambahkan ke BOM ✓', 'success');
+}
+
+function removeBOM(bi) {
+  const app = window.WarkopApp;
+  app.state.menus[activeBOM].bom.splice(bi, 1);
+  renderBOMDetail();
+  renderMenuList();
+  renderHPPSummary();
+  app.toast('Bahan dihapus dari BOM', 'warning');
+}
+
+function saveBOM() {
+  window.WarkopApp.toast('BOM ' + window.WarkopApp.state.menus[activeBOM].nama + ' tersimpan ✓', 'success');
+}
+
+function addNewMenu() {
+  const nama = prompt('Nama menu baru:');
+  if (!nama) return;
+  const harga = parseFloat(prompt('Harga jual (Rp):') || 0);
+  const app = window.WarkopApp;
+  const newId = 'MN-' + String(app.state.menus.length + 1).padStart(3,'0');
+  app.state.menus.push({ id: newId, nama, harga, emoji: '🍽️', bom: [] });
+  activeBOM = app.state.menus.length - 1;
+  renderMenuList();
+  renderBOMDetail();
+  renderHPPSummary();
+  app.toast('Menu ' + nama + ' ditambahkan ✓', 'success');
+}
+
+function renderHPPSummary() {
+  const app = window.WarkopApp;
+  document.getElementById('hppSummary').innerHTML = `
+    <thead><tr><th>Menu</th><th>Harga Jual</th><th>HPP</th><th>Margin</th></tr></thead>
+    <tbody>
+      ${app.state.menus.map(m => {
+        const hpp = app.calcHPP(m.id);
+        const margin = m.harga > 0 ? ((m.harga - hpp) / m.harga * 100).toFixed(1) : 0;
+        const cls = parseFloat(margin) >= 40 ? 'var(--accent-green)' : parseFloat(margin) >= 20 ? 'var(--accent-amber)' : 'var(--accent-red)';
+        return `<tr>
+          <td><span style="margin-right:6px">${m.emoji}</span>${m.nama}</td>
+          <td class="mono">${app.fmt(m.harga)}</td>
+          <td class="mono">${app.fmt(hpp)}</td>
+          <td class="mono" style="font-weight:700;color:${cls}">${margin}%</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  `;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Re-init when role changes
+  const origSwitch = window.WarkopApp.switchRole;
+  window.WarkopApp.switchRole = function(role) {
+    origSwitch(role);
+    initPage();
+  };
+  initPage();
+});
+</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/sync.js"></script>
+</body>
+</html>

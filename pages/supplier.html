@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarkopPOS — Supplier</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal{background:var(--bg-surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:24px;width:480px;max-width:95vw;transform:translateY(20px);transition:transform .25s}
+    .modal-overlay.open .modal{transform:translateY(0)}
+    .modal-title{font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:18px}
+    .supplier-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:all .15s}
+    .supplier-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow-sm)}
+  </style>
+<script>
+  // Auth Guard — redirect ke login jika belum login
+  (function() {
+    var s = sessionStorage.getItem('warkop_session');
+    if (!s) { window.location.href = '../login.html'; return; }
+    try { var sess = JSON.parse(s); if (Date.now() > sess.expiresAt) { sessionStorage.removeItem('warkop_session'); window.location.href = '../login.html'; } }
+    catch(e) { window.location.href = '../login.html'; }
+  })();
+</script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">☕</div><div class="brand-text"><span class="brand-name">WarkopPOS</span><span class="brand-sub">Stok Opname System</span></div></div>
+  <div class="role-pill" id="rolePill"><span class="role-dot"></span><span id="roleLabel">Owner</span></div>
+  <nav class="nav">
+    <div class="nav-section">Utama</div>
+    <a href="../index.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg>Dashboard</a>
+    <a href="pos.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>Kasir POS</a>
+    <a href="opname.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/></svg>Stok Opname</a>
+    <div class="nav-section">Manajemen</div>
+    <a href="barang.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clip-rule="evenodd"/></svg>Master Barang</a>
+    <a href="bom.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>Bill of Material</a>
+    <a href="supplier.html" class="nav-link active"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/><path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H11a1 1 0 001-1v-1h2.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1V8a1 1 0 00-.293-.707l-2-2A1 1 0 0017 5h-3a1 1 0 00-1 1v3H3V4z"/></svg>Supplier</a>
+    <div class="nav-section">Laporan</div>
+    <a href="reorder.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>Reorder Point<span class="nav-badge danger">3</span></a>
+    <a href="pareto.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>Analisis Pareto</a>
+    <a href="laporan.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>Laporan Harian</a>
+  </nav>
+      <div class="nav-section">Sistem</div>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Manajemen User</a>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync</a>
+  <div class="sidebar-footer"><select id="roleSwitch" onchange="window.WarkopApp.switchRole(this.value)"><option value="owner">🔑 Login: Owner</option><option value="karyawan">👤 Login: Karyawan</option></select></div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="window.WarkopApp.toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1 class="page-title">Data Supplier</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-display" id="clockDisplay">—</div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span id="syncStatus" style="font-size:10px;font-weight:700;color:var(--accent-amber);cursor:pointer;"
+          onclick="window.WarkopSync?.showConfigModal()" title="Klik untuk konfigurasi sync">
+          ○ Belum terhubung
+        </span>
+        <span id="lastSync" style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);">Klik untuk setup</span>
+      </div>
+      <button class="btn btn-sm btn-primary owner-only" onclick="openModal()">+ Tambah Supplier</button>
+    </div>
+  </header>
+
+  <div class="page-content">
+    <div id="supplierGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:20px;"></div>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Tabel Supplier</h2></div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr><th>Nama Supplier</th><th>Kontak</th><th>Barang Dipasok</th><th>Lead Time</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody id="supplierBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target.id==='modalOverlay')closeModal()">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Tambah Supplier</div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Nama Supplier</label><input id="f_nama" placeholder="Nama perusahaan / toko" /></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">No. Kontak (WhatsApp)</label><input id="f_kontak" placeholder="081xxxxxxxxx" /></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Barang Dipasok</label><input id="f_barang" placeholder="Kopi, Gula, dll" /></div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Lead Time</label><input id="f_lead" placeholder="1 hari / 2 jam" /></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select id="f_status"><option>Aktif</option><option>Review</option><option>Nonaktif</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="saveSupplier()">Simpan</button>
+      <button class="btn btn-outline" onclick="closeModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+<script>
+let editSupIdx = null;
+
+const statusStyle = {
+  'Aktif': 'badge-success',
+  'Review': 'badge-warning',
+  'Nonaktif': 'badge-danger'
+};
+
+function renderSuppliers() {
+  const app = window.WarkopApp;
+  // Cards
+  document.getElementById('supplierGrid').innerHTML = app.state.suppliers.map((s, i) => `
+    <div class="supplier-card" data-animate="fade-up" style="--delay:${i*60}ms">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary)">${s.nama}</div>
+        <span class="badge ${statusStyle[s.status]}" style="font-size:10px">${s.status}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:5px">📞 ${s.kontak}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:5px">📦 ${s.barang}</div>
+      <div style="font-size:12px;color:var(--text-muted)">⏱ Lead Time: <strong style="color:var(--text-primary)">${s.lead}</strong></div>
+      <div style="display:flex;gap:6px;margin-top:12px">
+        <a href="https://wa.me/${s.kontak.replace(/\D/g,'').replace(/^0/,'62')}" target="_blank" class="btn btn-sm btn-outline" style="font-size:11px;flex:1;justify-content:center">WhatsApp</a>
+        <button class="btn btn-sm btn-outline owner-only" onclick="editSupplier(${i})" style="font-size:11px">Edit</button>
+      </div>
+    </div>
+  `).join('');
+  // Table
+  document.getElementById('supplierBody').innerHTML = app.state.suppliers.map((s, i) => `
+    <tr>
+      <td style="font-weight:600">${s.nama}</td>
+      <td class="mono">${s.kontak}</td>
+      <td class="muted">${s.barang}</td>
+      <td class="mono">${s.lead}</td>
+      <td><span class="badge ${statusStyle[s.status]}" style="font-size:10px">${s.status}</span></td>
+      <td>
+        <button class="btn btn-sm btn-outline owner-only" onclick="editSupplier(${i})" style="padding:3px 10px;font-size:11px">Edit</button>
+      </td>
+    </tr>
+  `).join('');
+  document.querySelectorAll('[data-animate]').forEach(el => setTimeout(() => el.classList.add('visible'), 50));
+}
+
+function openModal() {
+  editSupIdx = null;
+  document.getElementById('modalTitle').textContent = 'Tambah Supplier';
+  ['f_nama','f_kontak','f_barang','f_lead'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f_status').value = 'Aktif';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function editSupplier(i) {
+  const app = window.WarkopApp;
+  if (app.state.role !== 'owner') { app.toast('Hanya Owner yang bisa edit!','error'); return; }
+  const s = app.state.suppliers[i];
+  editSupIdx = i;
+  document.getElementById('modalTitle').textContent = 'Edit: ' + s.nama;
+  document.getElementById('f_nama').value = s.nama;
+  document.getElementById('f_kontak').value = s.kontak;
+  document.getElementById('f_barang').value = s.barang;
+  document.getElementById('f_lead').value = s.lead;
+  document.getElementById('f_status').value = s.status;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function saveSupplier() {
+  const app = window.WarkopApp;
+  const s = {
+    nama: document.getElementById('f_nama').value.trim(),
+    kontak: document.getElementById('f_kontak').value.trim(),
+    barang: document.getElementById('f_barang').value.trim(),
+    lead: document.getElementById('f_lead').value.trim(),
+    status: document.getElementById('f_status').value
+  };
+  if (!s.nama) { app.toast('Nama supplier wajib diisi!','error'); return; }
+  if (editSupIdx !== null) { app.state.suppliers[editSupIdx] = s; app.toast('Supplier diperbarui ✓','success'); }
+  else { app.state.suppliers.push(s); app.toast('Supplier ' + s.nama + ' ditambahkan ✓','success'); }
+  closeModal();
+  renderSuppliers();
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+document.addEventListener('DOMContentLoaded', renderSuppliers);
+</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/sync.js"></script>
+</body>
+</html>

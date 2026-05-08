@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarkopPOS — Laporan Harian</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+    .summary-row:last-child{border-bottom:none}
+    .summary-label{font-size:12px;color:var(--text-secondary)}
+    .summary-val{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text-primary)}
+    .conclusion-box{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:var(--radius);padding:16px 18px;font-size:12px;color:var(--text-secondary);line-height:1.7}
+    .email-sched{background:var(--bg-elevated);border:1px dashed var(--border-strong);border-radius:var(--radius);padding:14px 18px;font-size:12px;color:var(--text-muted);text-align:center}
+    .locked-notice{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;color:var(--text-muted)}
+    .locked-notice .lock-icon{font-size:48px;margin-bottom:16px;opacity:.4}
+  </style>
+<script>
+  // Auth Guard — redirect ke login jika belum login
+  (function() {
+    var s = sessionStorage.getItem('warkop_session');
+    if (!s) { window.location.href = '../login.html'; return; }
+    try { var sess = JSON.parse(s); if (Date.now() > sess.expiresAt) { sessionStorage.removeItem('warkop_session'); window.location.href = '../login.html'; } }
+    catch(e) { window.location.href = '../login.html'; }
+  })();
+</script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">☕</div><div class="brand-text"><span class="brand-name">WarkopPOS</span><span class="brand-sub">Stok Opname System</span></div></div>
+  <div class="role-pill" id="rolePill"><span class="role-dot"></span><span id="roleLabel">Owner</span></div>
+  <nav class="nav">
+    <div class="nav-section">Utama</div>
+    <a href="../index.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg>Dashboard</a>
+    <a href="pos.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>Kasir POS</a>
+    <a href="opname.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/></svg>Stok Opname</a>
+    <div class="nav-section">Laporan</div>
+    <a href="reorder.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>Reorder Point<span class="nav-badge danger">3</span></a>
+    <a href="pareto.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>Analisis Pareto</a>
+    <a href="laporan.html" class="nav-link active owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>Laporan Harian</a>
+  </nav>
+      <div class="nav-section">Sistem</div>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Manajemen User</a>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync</a>
+  <div class="sidebar-footer"><select id="roleSwitch" onchange="window.WarkopApp.switchRole(this.value)"><option value="owner">🔑 Login: Owner</option><option value="karyawan">👤 Login: Karyawan</option></select></div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="window.WarkopApp.toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1 class="page-title">Laporan Harian</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-display" id="clockDisplay">—</div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span id="syncStatus" style="font-size:10px;font-weight:700;color:var(--accent-amber);cursor:pointer;"
+          onclick="window.WarkopSync?.showConfigModal()" title="Klik untuk konfigurasi sync">
+          ○ Belum terhubung
+        </span>
+        <span id="lastSync" style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);">Klik untuk setup</span>
+      </div>
+      <input type="date" id="tglLaporan" style="width:auto;padding:6px 12px;font-size:12px;" />
+    </div>
+  </header>
+  <div class="page-content" id="pageContent"></div>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+<script>
+function initPage() {
+  const app = window.WarkopApp;
+  const content = document.getElementById('pageContent');
+  if (app.state.role !== 'owner') {
+    content.innerHTML = `<div class="locked-notice"><div class="lock-icon">🔒</div><h3>Akses Terbatas</h3><p>Laporan Harian hanya untuk Owner.</p></div>`;
+    return;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('tglLaporan').value = today;
+
+  const totalPenjualan = 1421000;
+  const totalHPP = 934000;
+  const profit = totalPenjualan - totalHPP;
+  const margin = (profit/totalPenjualan*100).toFixed(1);
+
+  content.innerHTML = `
+    <div class="conclusion-box" style="margin-bottom:16px" data-animate="fade-up" style="--delay:0ms">
+      <strong style="color:var(--accent-blue);font-size:13px">📋 Kesimpulan Otomatis — ${new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</strong><br><br>
+      Hari ini terdapat <strong style="color:var(--text-primary)">3 bahan baku mencapai reorder point</strong> (Susu Cair, Gas LPG, Es Batu).
+      <strong style="color:var(--text-primary)">3 menu teratas menyumbang ${((504000+264000+180000)/1421000*100).toFixed(1)}%</strong> dari total penjualan Rp ${app.fmt(totalPenjualan).replace('Rp ','')}.
+      Ditemukan <strong style="color:var(--accent-amber)">selisih stok pada Kopi Bubuk dan Susu Cair</strong> — perlu audit internal.
+      Profit harian <strong style="color:var(--accent-green)">${app.fmt(profit)}</strong> (margin ${margin}%).
+      Laporan PDF & Excel dikirim otomatis ke email owner pukul 21.00 WIB.
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card" style="margin-bottom:14px" data-animate="fade-up" style="--delay:60ms">
+          <div class="card-header"><h2 class="card-title">Ringkasan Penjualan</h2><span class="badge badge-success">Lengkap</span></div>
+          <div class="summary-row"><span class="summary-label">Total Penjualan</span><span class="summary-val" style="color:var(--accent-green)">${app.fmt(totalPenjualan)}</span></div>
+          <div class="summary-row"><span class="summary-label">Total HPP (Harga Pokok)</span><span class="summary-val">${app.fmt(totalHPP)}</span></div>
+          <div class="summary-row"><span class="summary-label">Profit Kotor</span><span class="summary-val" style="color:var(--accent-green)">${app.fmt(profit)}</span></div>
+          <div class="summary-row"><span class="summary-label">Margin Keuntungan</span><span class="summary-val" style="color:var(--accent-green)">${margin}%</span></div>
+          <div class="summary-row"><span class="summary-label">Jumlah Transaksi</span><span class="summary-val">87 transaksi</span></div>
+          <div class="summary-row"><span class="summary-label">Rata-rata / Transaksi</span><span class="summary-val">${app.fmt(Math.round(totalPenjualan/87))}</span></div>
+          <div class="summary-row"><span class="summary-label">Dine-in</span><span class="summary-val">51 transaksi</span></div>
+          <div class="summary-row"><span class="summary-label">Take Away</span><span class="summary-val">36 transaksi</span></div>
+          <div class="summary-row"><span class="summary-label">Item Reorder Kritis</span><span class="summary-val" style="color:var(--accent-red)">3 barang</span></div>
+          <div class="summary-row"><span class="summary-label">Selisih Opname</span><span class="summary-val" style="color:var(--accent-amber)">2 barang</span></div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button class="btn btn-sm btn-primary" onclick="window.WarkopApp.toast('PDF laporan diunduh!','success')">📄 Unduh PDF</button>
+            <button class="btn btn-sm btn-outline" onclick="window.WarkopApp.toast('Excel laporan diunduh!','success')">📊 Unduh Excel</button>
+            <button class="btn btn-sm btn-outline" onclick="window.WarkopApp.toast('Laporan terkirim ke email owner ✉','success')">✉ Kirim Email</button>
+          </div>
+        </div>
+
+        <div class="card" data-animate="fade-up" style="--delay:120ms">
+          <div class="card-header"><h2 class="card-title">Kinerja Karyawan</h2></div>
+          <table class="data-table">
+            <thead><tr><th>Nama</th><th>Shift</th><th>Transaksi</th><th>Opname</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:600">Andi Prasetyo</td><td class="muted">Pagi</td><td class="mono">42</td><td><span class="badge badge-success" style="font-size:10px">✓ Selesai</span></td></tr>
+              <tr><td style="font-weight:600">Sari Wulandari</td><td class="muted">Siang</td><td class="mono">45</td><td><span class="badge badge-warning" style="font-size:10px">⏳ Pending</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:14px" data-animate="fade-up" style="--delay:180ms">
+          <div class="card-header"><h2 class="card-title">Barang Wajib Reorder</h2><span class="badge badge-danger">3 kritis</span></div>
+          <table class="data-table">
+            <thead><tr><th>Barang</th><th>Stok</th><th>ROP</th><th>Aksi</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:600">Susu Cair</td><td class="mono" style="color:var(--accent-red)">800 ml</td><td class="mono">2.000 ml</td><td><span class="badge badge-danger" style="font-size:10px">Reorder!</span></td></tr>
+              <tr><td style="font-weight:600">Gas LPG 3kg</td><td class="mono" style="color:var(--accent-red)">0.8 tab</td><td class="mono">1.05 tab</td><td><span class="badge badge-danger" style="font-size:10px">Reorder!</span></td></tr>
+              <tr><td style="font-weight:600">Es Batu</td><td class="mono" style="color:var(--accent-red)">4 bag</td><td class="mono">9 bag</td><td><span class="badge badge-danger" style="font-size:10px">Reorder!</span></td></tr>
+              <tr><td style="font-weight:600">Cup Plastik</td><td class="mono" style="color:var(--accent-amber)">85 pcs</td><td class="mono">260 pcs</td><td><span class="badge badge-warning" style="font-size:10px">Segera</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card" style="margin-bottom:14px" data-animate="fade-up" style="--delay:240ms">
+          <div class="card-header"><h2 class="card-title">Selisih Stok Opname</h2><span class="badge badge-warning">Perlu audit</span></div>
+          <table class="data-table">
+            <thead><tr><th>Barang</th><th>Sistem</th><th>Fisik</th><th>Selisih</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:600">Kopi Bubuk</td><td class="mono">1.500 gr</td><td class="mono">1.200 gr</td><td class="mono" style="color:var(--accent-red)">−300 gr</td><td><span class="badge badge-warning" style="font-size:10px">Audit</span></td></tr>
+              <tr><td style="font-weight:600">Susu Cair</td><td class="mono">1.200 ml</td><td class="mono">800 ml</td><td class="mono" style="color:var(--accent-red)">−400 ml</td><td><span class="badge badge-danger" style="font-size:10px">Approval</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="email-sched" data-animate="fade-up" style="--delay:300ms">
+          <div style="font-size:20px;margin-bottom:8px">✉</div>
+          <div style="font-weight:600;color:var(--text-secondary);margin-bottom:4px">Email Otomatis Terjadwal</div>
+          <div>Setiap malam pukul <strong style="color:var(--text-primary);font-family:var(--font-mono)">21:00 WIB</strong></div>
+          <div style="margin-top:4px">Berisi: PDF Laporan · Excel · Dashboard Summary · Alert Kritis</div>
+          <button class="btn btn-sm btn-outline" style="margin-top:12px" onclick="window.WarkopApp.toast('Test email terkirim ke owner@gmail.com ✉','success')">Kirim Test Email Sekarang</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.querySelectorAll('[data-animate]').forEach(el => setTimeout(()=>el.classList.add('visible'),50));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const origSwitch = window.WarkopApp.switchRole;
+  window.WarkopApp.switchRole = function(role) { origSwitch(role); initPage(); };
+  initPage();
+});
+</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/sync.js"></script>
+</body>
+</html>

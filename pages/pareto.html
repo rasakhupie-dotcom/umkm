@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarkopPOS — Analisis Pareto</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .pareto-rank { display:flex;align-items:center;gap:4px;width:28px;height:28px;border-radius:50%;background:var(--bg-overlay);font-family:var(--font-mono);font-size:11px;font-weight:700;justify-content:center;flex-shrink:0; }
+    .pareto-rank.gold   { background:rgba(212,175,55,.2);color:#D4AF37; }
+    .pareto-rank.silver { background:rgba(192,192,192,.2);color:#C0C0C0; }
+    .pareto-rank.bronze { background:rgba(205,127,50,.2);color:#CD7F32; }
+    .insight-box { background:var(--bg-elevated);border-left:3px solid var(--accent-green);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:12px 16px;margin-bottom:8px;font-size:12px;color:var(--text-secondary);line-height:1.5; }
+    .insight-box.warn { border-left-color:var(--accent-amber); }
+    .insight-box.danger { border-left-color:var(--accent-red); }
+    .locked-notice{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;color:var(--text-muted)}
+    .locked-notice .lock-icon{font-size:48px;margin-bottom:16px;opacity:.4}
+    .locked-notice h3{font-size:16px;color:var(--text-secondary);margin-bottom:8px}
+  </style>
+<script>
+  // Auth Guard — redirect ke login jika belum login
+  (function() {
+    var s = sessionStorage.getItem('warkop_session');
+    if (!s) { window.location.href = '../login.html'; return; }
+    try { var sess = JSON.parse(s); if (Date.now() > sess.expiresAt) { sessionStorage.removeItem('warkop_session'); window.location.href = '../login.html'; } }
+    catch(e) { window.location.href = '../login.html'; }
+  })();
+</script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">☕</div><div class="brand-text"><span class="brand-name">WarkopPOS</span><span class="brand-sub">Stok Opname System</span></div></div>
+  <div class="role-pill" id="rolePill"><span class="role-dot"></span><span id="roleLabel">Owner</span></div>
+  <nav class="nav">
+    <div class="nav-section">Utama</div>
+    <a href="../index.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg>Dashboard</a>
+    <a href="pos.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>Kasir POS</a>
+    <a href="opname.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/></svg>Stok Opname</a>
+    <div class="nav-section">Laporan</div>
+    <a href="reorder.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>Reorder Point<span class="nav-badge danger">3</span></a>
+    <a href="pareto.html" class="nav-link active owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>Analisis Pareto</a>
+    <a href="laporan.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>Laporan Harian</a>
+  </nav>
+      <div class="nav-section">Sistem</div>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Manajemen User</a>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync</a>
+  <div class="sidebar-footer"><select id="roleSwitch" onchange="window.WarkopApp.switchRole(this.value)"><option value="owner">🔑 Login: Owner</option><option value="karyawan">👤 Login: Karyawan</option></select></div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="window.WarkopApp.toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1 class="page-title">Analisis Pareto</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-display" id="clockDisplay">—</div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span id="syncStatus" style="font-size:10px;font-weight:700;color:var(--accent-amber);cursor:pointer;"
+          onclick="window.WarkopSync?.showConfigModal()" title="Klik untuk konfigurasi sync">
+          ○ Belum terhubung
+        </span>
+        <span id="lastSync" style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);">Klik untuk setup</span>
+      </div>
+    </div>
+  </header>
+  <div class="page-content" id="pageContent"></div>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+<script>
+// Static demo data for Pareto
+const paretoMenus = [
+  { nama:'Es Kopi Susu', qty:28, rev:504000, hpp:205800, emoji:'☕' },
+  { nama:'Kopi Hitam',   qty:18, rev:180000, hpp:36000,  emoji:'☕' },
+  { nama:'Matcha Latte', qty:12, rev:264000, hpp:117600, emoji:'🍵' },
+  { nama:'Indomie Telur',qty:10, rev:150000, hpp:74400,  emoji:'🍜' },
+  { nama:'Roti Bakar',   qty:8,  rev:96000,  hpp:28000,  emoji:'🍞' },
+  { nama:'Air Mineral',  qty:7,  rev:35000,  hpp:17500,  emoji:'💧' },
+  { nama:'Snack Chitato',qty:4,  rev:48000,  hpp:28000,  emoji:'🍿' },
+];
+
+const paretoBahan = [
+  { nama:'Susu Cair',    pct:28, cost:201600 },
+  { nama:'Kopi Bubuk',   pct:22, cost:158400 },
+  { nama:'Gula Aren',    pct:17, cost:122400 },
+  { nama:'Es Batu',      pct:12, cost:86400  },
+  { nama:'Gas LPG',      pct:8,  cost:57600  },
+  { nama:'Cup Plastik',  pct:7,  cost:50400  },
+  { nama:'Lainnya',      pct:6,  cost:43200  },
+];
+
+function initPage() {
+  const app = window.WarkopApp;
+  const content = document.getElementById('pageContent');
+  if (app.state.role !== 'owner') {
+    content.innerHTML = `<div class="locked-notice"><div class="lock-icon">🔒</div><h3>Akses Terbatas</h3><p>Analisis Pareto hanya untuk Owner.</p></div>`;
+    return;
+  }
+
+  const totalRev = paretoMenus.reduce((s,m) => s+m.rev, 0);
+  const totalHPP = paretoMenus.reduce((s,m) => s+m.hpp*m.qty/m.qty, 0); // per menu
+  const top3Rev = paretoMenus.slice(0,3).reduce((s,m)=>s+m.rev,0);
+  const top3Pct = (top3Rev/totalRev*100).toFixed(1);
+
+  content.innerHTML = `
+    <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+      <div class="metric-card metric-green" data-animate="fade-up" style="--delay:0ms">
+        <div class="metric-label">Top 3 Menu</div>
+        <div class="metric-value">${top3Pct}%</div>
+        <div class="metric-delta positive">dari total revenue</div>
+      </div>
+      <div class="metric-card metric-blue" data-animate="fade-up" style="--delay:60ms">
+        <div class="metric-label">Fast Moving Items</div>
+        <div class="metric-value">3</div>
+        <div class="metric-delta">produk dominan</div>
+      </div>
+      <div class="metric-card metric-amber" data-animate="fade-up" style="--delay:120ms">
+        <div class="metric-label">Slow Moving Items</div>
+        <div class="metric-value">4</div>
+        <div class="metric-delta negative">perlu evaluasi</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card" data-animate="fade-up" style="--delay:180ms">
+        <div class="card-header"><h2 class="card-title">Pareto Revenue Menu</h2><span class="badge badge-success">80/20 Rule</span></div>
+        <div id="paretoRevBars"></div>
+        <div style="margin-top:14px">
+          <div class="insight-box">✓ <strong>Es Kopi Susu + Matcha + Kopi Hitam</strong> = ${top3Pct}% total revenue. Pastikan bahan ketiga menu ini selalu tersedia.</div>
+          <div class="insight-box warn">⚡ <strong>Snack & Air Mineral</strong> hanya menyumbang 6% revenue — pertimbangkan promosi atau kurangi SKU.</div>
+        </div>
+      </div>
+
+      <div class="card" data-animate="fade-up" style="--delay:240ms">
+        <div class="card-header"><h2 class="card-title">Pareto Bahan Baku Terpakai</h2><span class="badge badge-warning">Kontrol biaya</span></div>
+        <div id="paretoBahanBars"></div>
+        <div style="margin-top:14px">
+          <div class="insight-box danger">⚠ <strong>Susu + Kopi Bubuk</strong> = 50% total biaya bahan. Kontrol ketat kedua item ini untuk jaga margin.</div>
+          <div class="insight-box">✓ Lakukan negosiasi harga dengan supplier Susu & Kopi untuk penghematan biaya signifikan.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px" data-animate="fade-up" style="--delay:300ms">
+      <div class="card-header"><h2 class="card-title">Ranking Lengkap Menu — Revenue & Profit</h2></div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr><th>Rank</th><th>Menu</th><th>Qty Terjual</th><th>Revenue</th><th>% Revenue</th><th>Profit</th><th>Margin</th><th>Kategori</th></tr></thead>
+          <tbody id="paretoTable"></tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  renderParetoBars();
+  renderParetoTable(totalRev);
+  document.querySelectorAll('[data-animate]').forEach(el => setTimeout(()=>el.classList.add('visible'),50));
+}
+
+const barColors = ['#1D9E75','#3B82F6','#8B5CF6','#F59E0B','#EF4444','#6B7280','#94A3B8'];
+
+function renderParetoBars() {
+  const app = window.WarkopApp;
+  const totalRev = paretoMenus.reduce((s,m)=>s+m.rev,0);
+  document.getElementById('paretoRevBars').innerHTML = paretoMenus.map((m,i) => {
+    const pct = (m.rev/totalRev*100).toFixed(1);
+    const w = (m.rev/paretoMenus[0].rev*100);
+    return `<div class="pareto-item" style="margin-bottom:8px">
+      <span class="pareto-label">${m.emoji} ${m.nama}</span>
+      <div class="pareto-track"><div class="pareto-fill" style="width:${w}%;--clr:${barColors[i]}">${pct}%</div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('paretoBahanBars').innerHTML = paretoBahan.map((b,i) => `
+    <div class="pareto-item" style="margin-bottom:8px">
+      <span class="pareto-label">${b.nama}</span>
+      <div class="pareto-track"><div class="pareto-fill" style="width:${b.pct/paretoBahan[0].pct*100}%;--clr:${barColors[i]}">${b.pct}%</div></div>
+    </div>
+  `).join('');
+}
+
+function renderParetoTable(totalRev) {
+  const app = window.WarkopApp;
+  let cumul = 0;
+  document.getElementById('paretoTable').innerHTML = paretoMenus.map((m, i) => {
+    const revPct = (m.rev/totalRev*100).toFixed(1);
+    cumul += m.rev;
+    const cumulPct = (cumul/totalRev*100).toFixed(1);
+    const profit = m.rev - m.hpp;
+    const margin = ((profit/m.rev)*100).toFixed(1);
+    const cat = i < 2 ? 'Fast Moving' : i < 5 ? 'Normal' : 'Slow Moving';
+    const catCls = i < 2 ? 'badge-success' : i < 5 ? 'badge-info' : 'badge-warning';
+    const rankCls = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    return `<tr>
+      <td><div class="pareto-rank ${rankCls}">${i+1}</div></td>
+      <td><span style="margin-right:6px">${m.emoji}</span><strong>${m.nama}</strong></td>
+      <td class="mono">${m.qty} pcs</td>
+      <td class="mono">${app.fmt(m.rev)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:60px;height:5px;background:var(--bg-overlay);border-radius:99px;overflow:hidden">
+            <div style="width:${revPct}%;height:100%;background:${barColors[i]};border-radius:99px"></div>
+          </div>
+          <span class="mono" style="font-size:11px">${revPct}%</span>
+        </div>
+      </td>
+      <td class="mono" style="color:var(--accent-green)">${app.fmt(profit)}</td>
+      <td class="mono" style="font-weight:700;color:${parseFloat(margin)>=40?'var(--accent-green)':parseFloat(margin)>=20?'var(--accent-amber)':'var(--accent-red)'}">${margin}%</td>
+      <td><span class="badge ${catCls}" style="font-size:10px">${cat}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const origSwitch = window.WarkopApp.switchRole;
+  window.WarkopApp.switchRole = function(role) { origSwitch(role); initPage(); };
+  initPage();
+});
+</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/sync.js"></script>
+</body>
+</html>

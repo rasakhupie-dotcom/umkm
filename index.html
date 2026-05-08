@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarkopPOS — Sistem Stok Opname</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Auth Guard — redirect ke login jika belum login
+  (function() {
+    var s = sessionStorage.getItem('warkop_session');
+    if (!s) { window.location.href = 'login.html'; return; }
+    try { var sess = JSON.parse(s); if (Date.now() > sess.expiresAt) { sessionStorage.removeItem('warkop_session'); window.location.href = 'login.html'; } }
+    catch(e) { window.location.href = 'login.html'; }
+  })();
+</script>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">☕</div>
+      <div class="brand-text">
+        <span class="brand-name">WarkopPOS</span>
+        <span class="brand-sub">Stok Opname System</span>
+      </div>
+    </div>
+
+    <div class="role-pill" id="rolePill">
+      <span class="role-dot"></span>
+      <span id="roleLabel">Owner</span>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-section">Utama</div>
+      <a href="index.html" class="nav-link active" data-page="dashboard">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/></svg>
+        Dashboard
+      </a>
+      <a href="pages/pos.html" class="nav-link" data-page="pos">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>
+        Kasir POS
+      </a>
+      <a href="pages/opname.html" class="nav-link" data-page="opname">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+        Stok Opname
+      </a>
+
+      <div class="nav-section">Manajemen</div>
+      <a href="pages/barang.html" class="nav-link" data-page="barang">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clip-rule="evenodd"/></svg>
+        Master Barang
+      </a>
+      <a href="pages/bom.html" class="nav-link owner-only" data-page="bom">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+        Bill of Material
+      </a>
+      <a href="pages/supplier.html" class="nav-link" data-page="supplier">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/><path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H11a1 1 0 001-1v-1h2.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1V8a1 1 0 00-.293-.707l-2-2A1 1 0 0017 5h-3a1 1 0 00-1 1v3H3V4z"/></svg>
+        Supplier
+      </a>
+
+      <div class="nav-section">Laporan</div>
+      <a href="pages/reorder.html" class="nav-link" data-page="reorder">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>
+        Reorder Point
+        <span class="nav-badge danger">3</span>
+      </a>
+      <a href="pages/pareto.html" class="nav-link owner-only" data-page="pareto">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+        Analisis Pareto
+      </a>
+      <a href="pages/laporan.html" class="nav-link owner-only" data-page="laporan">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>
+        Laporan Harian
+      </a>
+    </nav>
+
+        <div class="nav-section">Sistem</div>
+    <a href="pages/settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Manajemen User</a>
+    <a href="pages/settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync</a>
+  <div class="sidebar-footer">
+      <select id="roleSwitch" onchange="window.WarkopApp.switchRole(this.value)">
+        <option value="owner">🔑 Login: Owner</option>
+        <option value="karyawan">👤 Login: Karyawan</option>
+      </select>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main" id="main">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="window.WarkopApp.toggleSidebar()">
+          <span></span><span></span><span></span>
+        </button>
+        <h1 class="page-title" id="pageTitle">Dashboard Utama</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="clock-display" id="clockDisplay">—</div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span id="syncStatus" style="font-size:10px;font-weight:700;color:var(--accent-amber);cursor:pointer;"
+          onclick="window.WarkopSync?.showConfigModal()" title="Klik untuk konfigurasi sync">
+          ○ Belum terhubung
+        </span>
+        <span id="lastSync" style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);">Klik untuk setup</span>
+      </div>
+        <button class="btn btn-sm btn-outline" onclick="window.WarkopApp.sendReport()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+          Kirim Laporan
+        </button>
+      </div>
+    </header>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page-content" id="content-dashboard">
+
+      <!-- METRICS GRID -->
+      <div class="metrics-grid">
+        <div class="metric-card metric-green" data-animate="fade-up" style="--delay:0ms">
+          <div class="metric-label">Total Penjualan Hari Ini</div>
+          <div class="metric-value">Rp 1,42 Jt</div>
+          <div class="metric-delta positive">↑ +12% vs kemarin</div>
+          <div class="metric-sparkline">
+            <svg viewBox="0 0 80 24" preserveAspectRatio="none">
+              <polyline points="0,20 10,16 20,18 30,12 40,14 50,8 60,10 70,5 80,4"
+                fill="none" stroke="var(--accent-green)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="metric-card metric-amber" data-animate="fade-up" style="--delay:60ms">
+          <div class="metric-label">Profit Harian</div>
+          <div class="metric-value">Rp 487 Rb</div>
+          <div class="metric-delta positive">Margin 34.3%</div>
+        </div>
+        <div class="metric-card metric-blue" data-animate="fade-up" style="--delay:120ms">
+          <div class="metric-label">Transaksi</div>
+          <div class="metric-value">87</div>
+          <div class="metric-delta">Dine-in 51 · Take Away 36</div>
+        </div>
+        <div class="metric-card metric-red" data-animate="fade-up" style="--delay:180ms">
+          <div class="metric-label">Barang Kritis</div>
+          <div class="metric-value">8</div>
+          <div class="metric-delta negative">3 wajib reorder sekarang</div>
+        </div>
+      </div>
+
+      <!-- TWO COLUMN GRID -->
+      <div class="grid-2">
+
+        <!-- STOK STATUS -->
+        <div class="card" data-animate="fade-up" style="--delay:240ms">
+          <div class="card-header">
+            <h2 class="card-title">Status Stok Bahan Baku</h2>
+            <span class="badge badge-warning">8 hampir habis</span>
+          </div>
+          <div class="stock-list">
+            <div class="stock-item">
+              <div class="stock-info">
+                <span class="stock-name">Kopi Bubuk</span>
+                <span class="stock-qty">1.2 kg / 0.5 kg min</span>
+              </div>
+              <div class="stock-bar-wrap">
+                <div class="stock-bar"><div class="stock-fill ok" style="width:85%"></div></div>
+                <span class="stock-badge ok">Aman</span>
+              </div>
+            </div>
+            <div class="stock-item">
+              <div class="stock-info">
+                <span class="stock-name">Susu Cair</span>
+                <span class="stock-qty">800 ml / 1 L min</span>
+              </div>
+              <div class="stock-bar-wrap">
+                <div class="stock-bar"><div class="stock-fill critical" style="width:30%"></div></div>
+                <span class="stock-badge critical">Kritis</span>
+              </div>
+            </div>
+            <div class="stock-item">
+              <div class="stock-info">
+                <span class="stock-name">Gula Aren</span>
+                <span class="stock-qty">2.1 L / 1 L min</span>
+              </div>
+              <div class="stock-bar-wrap">
+                <div class="stock-bar"><div class="stock-fill ok" style="width:75%"></div></div>
+                <span class="stock-badge ok">Aman</span>
+              </div>
+            </div>
+            <div class="stock-item">
+              <div class="stock-info">
+                <span class="stock-name">Es Batu</span>
+                <span class="stock-qty">4 bag / 5 bag min</span>
+              </div>
+              <div class="stock-bar-wrap">
+                <div class="stock-bar"><div class="stock-fill warning" style="width:45%"></div></div>
+                <span class="stock-badge warning">Hampir Habis</span>
+              </div>
+            </div>
+            <div class="stock-item">
+              <div class="stock-info">
+                <span class="stock-name">Cup Plastik</span>
+                <span class="stock-qty">85 pcs / 100 pcs min</span>
+              </div>
+              <div class="stock-bar-wrap">
+                <div class="stock-bar"><div class="stock-fill warning" style="width:55%"></div></div>
+                <span class="stock-badge warning">Hampir Habis</span>
+              </div>
+            </div>
+            <div class="stock-item">
+              <div class="stock-info">
+                <span class="stock-name">Gas LPG</span>
+                <span class="stock-qty">0.8 tab / 1 tab min</span>
+              </div>
+              <div class="stock-bar-wrap">
+                <div class="stock-bar"><div class="stock-fill critical" style="width:20%"></div></div>
+                <span class="stock-badge critical">Kritis</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="card" data-animate="fade-up" style="--delay:300ms">
+          <div class="card-header">
+            <h2 class="card-title">Alert & Notifikasi</h2>
+            <span class="badge badge-danger">5 baru</span>
+          </div>
+          <div class="alert-list">
+            <div class="alert-item critical">
+              <div class="alert-dot"></div>
+              <div class="alert-content">
+                <span class="alert-text">Susu Cair di bawah safety stock — wajib reorder hari ini</span>
+                <span class="alert-time">08:45</span>
+              </div>
+            </div>
+            <div class="alert-item critical">
+              <div class="alert-dot"></div>
+              <div class="alert-content">
+                <span class="alert-text">Gas LPG mencapai Reorder Point (ROP)</span>
+                <span class="alert-time">09:12</span>
+              </div>
+            </div>
+            <div class="alert-item warning">
+              <div class="alert-dot"></div>
+              <div class="alert-content">
+                <span class="alert-text">Selisih stok Gula Aren: sistem 2.5L, fisik 2.1L — perlu audit</span>
+                <span class="alert-time">10:30</span>
+              </div>
+            </div>
+            <div class="alert-item warning">
+              <div class="alert-dot"></div>
+              <div class="alert-content">
+                <span class="alert-text">Es Batu hampir habis — pesan sebelum jam 14.00</span>
+                <span class="alert-time">11:05</span>
+              </div>
+            </div>
+            <div class="alert-item info">
+              <div class="alert-dot"></div>
+              <div class="alert-content">
+                <span class="alert-text">Laporan harian terjadwal otomatis pukul 21.00 WIB</span>
+                <span class="alert-time">Terjadwal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM GRID -->
+      <div class="grid-2">
+        <!-- PARETO BAR -->
+        <div class="card" data-animate="fade-up" style="--delay:360ms">
+          <div class="card-header">
+            <h2 class="card-title">Produk Terlaris Hari Ini</h2>
+          </div>
+          <div class="pareto-list">
+            <div class="pareto-item"><span class="pareto-label">Es Kopi Susu</span>
+              <div class="pareto-track"><div class="pareto-fill" style="width:100%;--clr:#1D9E75">82%</div></div></div>
+            <div class="pareto-item"><span class="pareto-label">Kopi Hitam</span>
+              <div class="pareto-track"><div class="pareto-fill" style="width:72%;--clr:#3B82F6">61%</div></div></div>
+            <div class="pareto-item"><span class="pareto-label">Matcha Latte</span>
+              <div class="pareto-track"><div class="pareto-fill" style="width:54%;--clr:#8B5CF6">44%</div></div></div>
+            <div class="pareto-item"><span class="pareto-label">Indomie Telur</span>
+              <div class="pareto-track"><div class="pareto-fill" style="width:46%;--clr:#F59E0B">39%</div></div></div>
+            <div class="pareto-item"><span class="pareto-label">Roti Bakar</span>
+              <div class="pareto-track"><div class="pareto-fill" style="width:26%;--clr:#6B7280">22%</div></div></div>
+          </div>
+        </div>
+
+        <!-- JAM RAMAI -->
+        <div class="card" data-animate="fade-up" style="--delay:420ms">
+          <div class="card-header">
+            <h2 class="card-title">Jam Ramai Penjualan</h2>
+          </div>
+          <div class="bar-chart">
+            <div class="chart-bars" id="hourlyChart"></div>
+            <div class="chart-label">Puncak: 09.00–10.00 (32 transaksi)</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-dashboard -->
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/sync.js"></script>
+</body>
+</html>

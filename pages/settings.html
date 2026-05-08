@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WarkopPOS — Pengaturan Sinkronisasi</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .step-card { background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:10px; }
+    .step-number { width:28px;height:28px;border-radius:50%;background:var(--accent-green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+    .step-row { display:flex;align-items:flex-start;gap:12px; }
+    .step-body { flex:1; }
+    .step-title { font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px; }
+    .step-desc { font-size:12px;color:var(--text-secondary);line-height:1.6; }
+    code { background:rgba(255,255,255,.08);padding:2px 8px;border-radius:4px;font-family:var(--font-mono);font-size:11px;color:var(--accent-green); }
+    .status-box { border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;font-size:13px;font-weight:600; }
+    .status-ok { background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.3);color:var(--accent-green); }
+    .status-warn { background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.3);color:var(--accent-amber); }
+    .status-err { background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.3);color:var(--accent-red); }
+    .log-box { background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);max-height:180px;overflow-y:auto;white-space:pre-wrap;line-height:1.7; }
+    .conn-dot { width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px; }
+    .conn-dot.online { background:var(--accent-green);box-shadow:0 0 6px var(--accent-green);animation:pulse-dot 2s infinite; }
+    .conn-dot.offline { background:var(--accent-amber); }
+    .conn-dot.unknown { background:var(--text-muted); }
+    @keyframes pulse-dot { 0%,100%{opacity:1;}50%{opacity:.4;} }
+  </style>
+<script>
+  // Auth Guard — redirect ke login jika belum login
+  (function() {
+    var s = sessionStorage.getItem('warkop_session');
+    if (!s) { window.location.href = '../login.html'; return; }
+    try { var sess = JSON.parse(s); if (Date.now() > sess.expiresAt) { sessionStorage.removeItem('warkop_session'); window.location.href = '../login.html'; } }
+    catch(e) { window.location.href = '../login.html'; }
+  })();
+</script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">☕</div><div class="brand-text"><span class="brand-name">WarkopPOS</span><span class="brand-sub">Stok Opname System</span></div></div>
+  <div class="role-pill" id="rolePill"><span class="role-dot"></span><span id="roleLabel">Owner</span></div>
+  <nav class="nav">
+    <div class="nav-section">Utama</div>
+    <a href="../index.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg>Dashboard</a>
+    <a href="pos.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>Kasir POS</a>
+    <a href="opname.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/></svg>Stok Opname</a>
+    <div class="nav-section">Manajemen</div>
+    <a href="barang.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clip-rule="evenodd"/></svg>Master Barang</a>
+    <a href="bom.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>Bill of Material</a>
+    <a href="supplier.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/><path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H11a1 1 0 001-1v-1h2.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1V8a1 1 0 00-.293-.707l-2-2A1 1 0 0017 5h-3a1 1 0 00-1 1v3H3V4z"/></svg>Supplier</a>
+    <div class="nav-section">Laporan</div>
+    <a href="reorder.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>Reorder Point</a>
+    <a href="pareto.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>Analisis Pareto</a>
+    <a href="laporan.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6z" clip-rule="evenodd"/></svg>Laporan Harian</a>
+    <div class="nav-section">Sistem</div>
+    <a href="settings.html" class="nav-link active">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+      Manajemen User</a>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync
+    </a>
+  </nav>
+  <div class="sidebar-footer"><select id="roleSwitch" onchange="window.WarkopApp.switchRole(this.value)"><option value="owner">🔑 Login: Owner</option><option value="karyawan">👤 Login: Karyawan</option></select></div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="window.WarkopApp.toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1 class="page-title">Pengaturan Sinkronisasi Google Sheets</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-display" id="clockDisplay">—</div>
+    </div>
+  </header>
+
+  <div class="page-content">
+
+    <!-- STATUS KONEKSI -->
+    <div class="card" style="margin-bottom:14px;" data-animate="fade-up">
+      <div class="card-header">
+        <h2 class="card-title">Status Koneksi</h2>
+        <button class="btn btn-sm btn-outline" onclick="testConn()">🔄 Refresh Status</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+        <div style="padding:14px;background:var(--bg-elevated);border-radius:var(--radius);text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Apps Script</div>
+          <div id="statusAPI" style="font-size:13px;font-weight:700;"><span class="conn-dot unknown"></span>—</div>
+        </div>
+        <div style="padding:14px;background:var(--bg-elevated);border-radius:var(--radius);text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Google Sheets</div>
+          <div id="statusSheets" style="font-size:13px;font-weight:700;"><span class="conn-dot unknown"></span>—</div>
+        </div>
+        <div style="padding:14px;background:var(--bg-elevated);border-radius:var(--radius);text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Queue Offline</div>
+          <div id="statusQueue" style="font-size:13px;font-weight:700;">0 item</div>
+        </div>
+      </div>
+      <div id="statusBox" class="status-box status-warn">○ Belum dikonfigurasi — isi URL Apps Script di bawah</div>
+    </div>
+
+    <div class="grid-2" style="align-items:start;">
+
+      <!-- KONFIGURASI URL -->
+      <div>
+        <div class="card" style="margin-bottom:14px;" data-animate="fade-up">
+          <div class="card-header"><h2 class="card-title">URL Google Apps Script</h2></div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Web App URL</label>
+            <input type="text" id="apiUrlInput"
+              placeholder="https://script.google.com/macros/s/XXXXXXX/exec"
+              style="font-family:var(--font-mono);font-size:12px;" />
+            <div class="form-note">Dapatkan URL ini setelah Deploy Apps Script sebagai Web App</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveUrl()">💾 Simpan & Test</button>
+            <button class="btn btn-outline" onclick="clearUrl()">🗑 Hapus URL</button>
+            <button class="btn btn-outline" onclick="syncNow()">⚡ Sync Sekarang</button>
+          </div>
+        </div>
+
+        <!-- TEST HASIL -->
+        <div class="card" style="margin-bottom:14px;" data-animate="fade-up">
+          <div class="card-header"><h2 class="card-title">Log Koneksi</h2><button class="btn btn-sm btn-outline" onclick="clearLog()">Hapus</button></div>
+          <div class="log-box" id="logBox">Belum ada aktivitas...</div>
+        </div>
+
+        <!-- PENGATURAN EMAIL -->
+        <div class="card owner-only" data-animate="fade-up">
+          <div class="card-header"><h2 class="card-title">Email Laporan Otomatis</h2></div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Email Owner</label>
+            <input type="email" id="ownerEmail" placeholder="owner@gmail.com" />
+            <div class="form-note">Laporan PDF dikirim otomatis setiap pukul 21.00 WIB</div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Jam Kirim Laporan</label>
+            <select id="jamLaporan">
+              <option value="19">19.00 WIB</option>
+              <option value="20">20.00 WIB</option>
+              <option value="21" selected>21.00 WIB</option>
+              <option value="22">22.00 WIB</option>
+              <option value="23">23.00 WIB</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="testEmail()">📧 Test Kirim Email Sekarang</button>
+        </div>
+      </div>
+
+      <!-- PANDUAN SETUP -->
+      <div class="card" data-animate="fade-up">
+        <div class="card-header"><h2 class="card-title">Panduan Setup Apps Script</h2></div>
+
+        <div class="step-card">
+          <div class="step-row">
+            <div class="step-number">1</div>
+            <div class="step-body">
+              <div class="step-title">Upload & Buka Google Sheets</div>
+              <div class="step-desc">Upload <code>Warkop_Stok_Opname_System.xlsx</code> ke Google Drive → klik kanan → <strong>Buka dengan Google Sheets</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-row">
+            <div class="step-number">2</div>
+            <div class="step-body">
+              <div class="step-title">Buka Apps Script Editor</div>
+              <div class="step-desc">Di Google Sheets → klik menu <strong>Extensions → Apps Script</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-row">
+            <div class="step-number">3</div>
+            <div class="step-body">
+              <div class="step-title">Paste Kode Code.gs</div>
+              <div class="step-desc">Hapus kode default → paste seluruh isi file <code>Code.gs</code> yang ada di folder <code>apps-script/</code> → ganti <code>ownerEmail</code></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-row">
+            <div class="step-number">4</div>
+            <div class="step-body">
+              <div class="step-title">Paste appsscript.json</div>
+              <div class="step-desc">Di editor → klik ikon ⚙️ Project Settings → centang <strong>"Show appsscript.json"</strong> → paste isi file <code>appsscript.json</code> (untuk OAuth scope Gmail)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-row">
+            <div class="step-number">5</div>
+            <div class="step-body">
+              <div class="step-title">Deploy sebagai Web App</div>
+              <div class="step-desc">
+                Klik <strong>Deploy → New deployment</strong><br>
+                Type: <code>Web app</code><br>
+                Execute as: <code>Me</code><br>
+                Access: <code>Anyone</code><br>
+                → Klik <strong>Deploy</strong> → Copy URL
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-row">
+            <div class="step-number">6</div>
+            <div class="step-body">
+              <div class="step-title">Paste URL di sini</div>
+              <div class="step-desc">Tempel URL yang di-copy ke kolom <strong>"Web App URL"</strong> di sebelah kiri → klik <strong>Simpan & Test</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-row">
+            <div class="step-number">7</div>
+            <div class="step-body">
+              <div class="step-title">Aktifkan Trigger Email</div>
+              <div class="step-desc">Di Apps Script editor → pilih fungsi <code>setupTrigger</code> → klik <strong>Run ▶</strong> → authorize → email laporan aktif!</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;padding:12px;background:rgba(29,158,117,.07);border:1px solid rgba(29,158,117,.2);border-radius:var(--radius);font-size:12px;color:var(--accent-green);line-height:1.6;">
+          <strong>Catatan:</strong> Setiap edit Code.gs harus deploy ulang:<br>
+          <code>Deploy → Manage deployments → ✏️ Edit → New version → Deploy</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA SYNC STATUS -->
+    <div class="card" style="margin-top:14px;" data-animate="fade-up">
+      <div class="card-header">
+        <h2 class="card-title">Status Sinkronisasi Data</h2>
+        <button class="btn btn-sm btn-primary" onclick="syncAllData()">⚡ Sync Semua</button>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Sheet / Data</th><th>Terakhir Sync</th><th>Jumlah Record</th><th>Status</th><th>Aksi</th></tr></thead>
+        <tbody id="syncTable">
+          <tr><td>MASTER_BARANG</td><td class="muted mono" id="syncBarangTime">—</td><td id="syncBarangCount">—</td><td id="syncBarangStatus"><span class="badge badge-gray">Belum sync</span></td><td><button class="btn btn-sm btn-outline" onclick="syncData('barang')">Sync</button></td></tr>
+          <tr><td>STOK_HARIAN</td><td class="muted mono" id="syncStokTime">—</td><td id="syncStokCount">—</td><td id="syncStokStatus"><span class="badge badge-gray">Belum sync</span></td><td><button class="btn btn-sm btn-outline" onclick="syncData('stok')">Sync</button></td></tr>
+          <tr><td>TRANSAKSI_POS</td><td class="muted mono" id="syncTrxTime">—</td><td id="syncTrxCount">—</td><td id="syncTrxStatus"><span class="badge badge-gray">Belum sync</span></td><td><button class="btn btn-sm btn-outline" onclick="syncData('transaksi')">Sync</button></td></tr>
+          <tr><td>STOK_OPNAME</td><td class="muted mono" id="syncOpnameTime">—</td><td id="syncOpnameCount">—</td><td id="syncOpnameStatus"><span class="badge badge-gray">Belum sync</span></td><td><button class="btn btn-sm btn-outline" onclick="syncData('opname')">Sync</button></td></tr>
+          <tr><td>REORDER_POINT</td><td class="muted mono" id="syncROPTime">—</td><td id="syncROPCount">—</td><td id="syncROPStatus"><span class="badge badge-gray">Belum sync</span></td><td><button class="btn btn-sm btn-outline" onclick="syncData('reorder')">Sync</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/sync.js"></script>
+<script>
+let logLines = [];
+
+function addLog(msg, type = 'info') {
+  const colors = { info:'#8C8880', ok:'#1D9E75', err:'#DC2626', warn:'#D97706' };
+  const t = new Date().toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logLines.unshift(`[${t}] ${msg}`);
+  if (logLines.length > 50) logLines.pop();
+  const el = document.getElementById('logBox');
+  if (el) {
+    el.innerHTML = logLines.map((l, i) => {
+      const c = i === 0 ? (type === 'ok' ? '#1D9E75' : type === 'err' ? '#DC2626' : '#8C8880') : '#5C5850';
+      return `<span style="color:${c}">${l}</span>`;
+    }).join('\n');
+  }
+}
+
+function clearLog() { logLines = []; document.getElementById('logBox').textContent = 'Log dibersihkan.'; }
+
+async function saveUrl() {
+  const url = document.getElementById('apiUrlInput').value.trim();
+  if (!url) { window.WarkopApp.toast('URL tidak boleh kosong!', 'error'); return; }
+  if (!url.startsWith('https://script.google.com')) {
+    window.WarkopApp.toast('URL tidak valid!', 'error');
+    addLog('❌ URL tidak valid: ' + url, 'err');
+    return;
+  }
+  window.WarkopAPI.setUrl(url);
+  addLog('💾 URL disimpan: ' + url.substring(0, 60) + '...');
+  await testConn();
+}
+
+function clearUrl() {
+  window.WarkopAPI.setUrl('');
+  document.getElementById('apiUrlInput').value = '';
+  setStatus('warn', '○ URL dihapus — konfigurasi ulang untuk sinkronisasi');
+  addLog('🗑 URL dihapus');
+  window.WarkopApp.toast('URL dihapus', 'warning');
+}
+
+async function testConn() {
+  if (!window.WarkopAPI.isConfigured()) {
+    setStatus('warn', '○ Belum dikonfigurasi — isi URL Apps Script di atas');
+    addLog('⚠ URL belum diisi', 'warn');
+    return;
+  }
+  setStatus('info', '🔄 Menguji koneksi...');
+  addLog('🔄 Test koneksi ke Apps Script...');
+  try {
+    const ok = await window.WarkopAPI.ping();
+    if (ok) {
+      setStatus('ok', '● Terhubung ke Google Sheets — sinkronisasi aktif');
+      addLog('✅ Koneksi berhasil! Apps Script online.', 'ok');
+      document.getElementById('statusAPI').innerHTML = '<span class="conn-dot online"></span>Online';
+      document.getElementById('statusSheets').innerHTML = '<span class="conn-dot online"></span>Terhubung';
+      window.WarkopApp.toast('✅ Terhubung ke Google Sheets!', 'success');
+    } else {
+      setStatus('err', '❌ Koneksi gagal — periksa URL dan deployment Apps Script');
+      addLog('❌ Ping gagal — API tidak merespons', 'err');
+    }
+  } catch (e) {
+    setStatus('err', '❌ Error: ' + e.message);
+    addLog('❌ ' + e.message, 'err');
+  }
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('statusBox');
+  if (!el) return;
+  el.className = 'status-box ' + (type === 'ok' ? 'status-ok' : type === 'err' ? 'status-err' : 'status-warn');
+  el.textContent = msg;
+}
+
+async function syncData(type) {
+  if (!window.WarkopAPI.isConfigured()) {
+    window.WarkopApp.toast('Konfigurasi URL dulu!', 'error');
+    return;
+  }
+  const t = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  const fns = {
+    barang:    { fn: () => window.WarkopAPI.getBarang(),    timeId:'syncBarangTime',  countId:'syncBarangCount',  statusId:'syncBarangStatus' },
+    stok:      { fn: () => window.WarkopAPI.getStokHarian(),timeId:'syncStokTime',    countId:'syncStokCount',    statusId:'syncStokStatus' },
+    transaksi: { fn: () => window.WarkopAPI.getTransaksi(), timeId:'syncTrxTime',     countId:'syncTrxCount',     statusId:'syncTrxStatus' },
+    opname:    { fn: () => window.WarkopAPI.getOpname(),    timeId:'syncOpnameTime',  countId:'syncOpnameCount',  statusId:'syncOpnameStatus' },
+    reorder:   { fn: () => window.WarkopAPI.getReorder(),   timeId:'syncROPTime',     countId:'syncROPCount',     statusId:'syncROPStatus' },
+  };
+  const cfg = fns[type];
+  if (!cfg) return;
+  try {
+    addLog(`🔄 Sync ${type}...`);
+    document.getElementById(cfg.statusId).innerHTML = '<span class="badge badge-warning">Syncing...</span>';
+    const data = await cfg.fn();
+    const count = Array.isArray(data) ? data.length : '—';
+    document.getElementById(cfg.timeId).textContent = t;
+    document.getElementById(cfg.countId).textContent = count + ' record';
+    document.getElementById(cfg.statusId).innerHTML = '<span class="badge badge-success">✓ Sync</span>';
+    addLog(`✅ ${type}: ${count} record berhasil disync`, 'ok');
+    window.WarkopApp.toast(`✅ ${type} tersinkronisasi: ${count} record`, 'success');
+    // Update state lokal jika barang
+    if (type === 'barang' && Array.isArray(data) && window.WarkopApp?.state) {
+      window.WarkopApp.state.barang = data.map(b => ({
+        id: b.id, nama: b.nama, kategori: b.kategori, supplier: b.supplier,
+        satuan: b.satuan, stok: Number(b.stok)||0, min: Number(b.min)||0,
+        safety: Number(b.safety)||0, lead: Number(b.lead)||1,
+        avgDaily: Number(b.avgDaily)||0, hBeli: Number(b.hBeli)||0, hJual: Number(b.hJual)||0
+      }));
+      addLog('📦 State lokal diperbarui dari Sheets', 'ok');
+    }
+  } catch (e) {
+    document.getElementById(cfg.statusId).innerHTML = '<span class="badge badge-danger">Error</span>';
+    addLog('❌ Sync ' + type + ' gagal: ' + e.message, 'err');
+    window.WarkopApp.toast('Sync gagal: ' + e.message, 'error');
+  }
+}
+
+async function syncAllData() {
+  addLog('🚀 Sync semua data dimulai...');
+  for (const t of ['barang','stok','transaksi','opname','reorder']) {
+    await syncData(t);
+    await new Promise(r => setTimeout(r, 500)); // jeda antar request
+  }
+  addLog('🏁 Sync semua selesai', 'ok');
+}
+
+async function syncNow() {
+  if (!window.WarkopAPI.isConfigured()) { window.WarkopApp.toast('Konfigurasi URL dulu!', 'error'); return; }
+  addLog('⚡ Manual sync...');
+  await syncData('barang');
+  window.WarkopApp.toast('Sync selesai!', 'success');
+}
+
+async function testEmail() {
+  if (!window.WarkopAPI.isConfigured()) { window.WarkopApp.toast('Konfigurasi URL dulu!', 'error'); return; }
+  addLog('📧 Kirim email laporan test...');
+  try {
+    await window.WarkopAPI.sendLaporan();
+    addLog('✅ Email laporan terkirim!', 'ok');
+    window.WarkopApp.toast('✅ Email laporan terkirim ke owner!', 'success');
+  } catch(e) {
+    addLog('❌ Gagal kirim email: ' + e.message, 'err');
+    window.WarkopApp.toast('Gagal: ' + e.message, 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const api = window.WarkopAPI;
+  const savedUrl = api.getUrl();
+  if (savedUrl) {
+    document.getElementById('apiUrlInput').value = savedUrl;
+    addLog('📋 URL tersimpan dari session sebelumnya: ...' + savedUrl.slice(-20));
+  }
+  const queue = JSON.parse(localStorage.getItem('warkop_sync_queue') || '[]');
+  document.getElementById('statusQueue').textContent = queue.length + ' item';
+  if (queue.length > 0) {
+    document.getElementById('statusQueue').style.color = 'var(--accent-amber)';
+    addLog(`⚠ ${queue.length} item pending di offline queue`, 'warn');
+  }
+  if (savedUrl) testConn();
+});
+</script>
+</body>
+</html>

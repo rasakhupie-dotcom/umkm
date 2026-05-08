@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarkopPOS — Reorder Point</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Auth Guard — redirect ke login jika belum login
+  (function() {
+    var s = sessionStorage.getItem('warkop_session');
+    if (!s) { window.location.href = '../login.html'; return; }
+    try { var sess = JSON.parse(s); if (Date.now() > sess.expiresAt) { sessionStorage.removeItem('warkop_session'); window.location.href = '../login.html'; } }
+    catch(e) { window.location.href = '../login.html'; }
+  })();
+</script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">☕</div><div class="brand-text"><span class="brand-name">WarkopPOS</span><span class="brand-sub">Stok Opname System</span></div></div>
+  <div class="role-pill" id="rolePill"><span class="role-dot"></span><span id="roleLabel">Owner</span></div>
+  <nav class="nav">
+    <div class="nav-section">Utama</div>
+    <a href="../index.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg>Dashboard</a>
+    <a href="pos.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>Kasir POS</a>
+    <a href="opname.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9 4H7v2h2v2h2v-2h2V9z" clip-rule="evenodd"/></svg>Stok Opname</a>
+    <div class="nav-section">Laporan</div>
+    <a href="reorder.html" class="nav-link active"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>Reorder Point<span class="nav-badge danger">3</span></a>
+    <a href="pareto.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>Analisis Pareto</a>
+    <a href="laporan.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>Laporan Harian</a>
+  </nav>
+      <div class="nav-section">Sistem</div>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Manajemen User</a>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync</a>
+  <div class="sidebar-footer"><select id="roleSwitch" onchange="window.WarkopApp.switchRole(this.value)"><option value="owner">🔑 Login: Owner</option><option value="karyawan">👤 Login: Karyawan</option></select></div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="window.WarkopApp.toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1 class="page-title">Reorder Point Otomatis</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-display" id="clockDisplay">—</div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span id="syncStatus" style="font-size:10px;font-weight:700;color:var(--accent-amber);cursor:pointer;"
+          onclick="window.WarkopSync?.showConfigModal()" title="Klik untuk konfigurasi sync">
+          ○ Belum terhubung
+        </span>
+        <span id="lastSync" style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);">Klik untuk setup</span>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="window.WarkopApp.toast('Laporan reorder dikirim ke owner!','success')">Kirim Alert ke Owner</button>
+    </div>
+  </header>
+
+  <div class="page-content">
+    <div class="rop-formula-box" data-animate="fade-up" style="--delay:0ms">
+      <div class="rop-formula-label">Rumus ROP</div>
+      <div class="rop-formula">ROP = (Rata-rata Pemakaian Harian × Lead Time) + Safety Stock</div>
+    </div>
+
+    <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;" data-animate="fade-up" style="--delay:60ms">
+      <div class="metric-card metric-red">
+        <div class="metric-label">Reorder Sekarang!</div>
+        <div class="metric-value" id="countReorder">—</div>
+        <div class="metric-delta negative">wajib beli hari ini</div>
+      </div>
+      <div class="metric-card metric-amber">
+        <div class="metric-label">Segera Reorder</div>
+        <div class="metric-value" id="countWarning">—</div>
+        <div class="metric-delta">dalam 1-2 hari</div>
+      </div>
+      <div class="metric-card metric-green">
+        <div class="metric-label">Stok Aman</div>
+        <div class="metric-value" id="countOk">—</div>
+        <div class="metric-delta positive">tidak perlu aksi</div>
+      </div>
+    </div>
+
+    <div class="card" data-animate="fade-up" style="--delay:120ms">
+      <div class="card-header">
+        <h2 class="card-title">Status Reorder Semua Barang</h2>
+        <div style="display:flex;gap:8px">
+          <select id="filterStatus" onchange="renderROP()" style="width:auto;padding:5px 10px;font-size:12px;">
+            <option value="all">Semua Status</option>
+            <option value="reorder">⚠ Reorder</option>
+            <option value="warning">⚡ Hampir Habis</option>
+            <option value="ok">✓ Aman</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="ropTable">
+          <thead>
+            <tr>
+              <th>Barcode</th><th>Nama Barang</th><th>Satuan</th>
+              <th>Avg Daily</th><th>Lead Time</th><th>Safety Stock</th>
+              <th>ROP</th><th>Stok Saat Ini</th><th>Selisih</th>
+              <th>Rekomendasi Beli</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="ropBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+<script>
+function renderROP() {
+  const app = window.WarkopApp;
+  if (!app) return;
+  const filter = document.getElementById('filterStatus').value;
+  let reorder = 0, warning = 0, ok = 0;
+
+  const rows = app.state.barang.map(item => {
+    const r = app.rop(item);
+    const selisih = item.stok - r;
+    const status = app.stockStatus(item);
+    if (status === 'reorder') reorder++;
+    else if (status === 'warning') warning++;
+    else ok++;
+    const beli = status === 'reorder' ? Math.max(0, (r * 3) - item.stok) : 0;
+    return { item, r, selisih, status, beli };
+  }).filter(d => filter === 'all' || d.status === filter);
+
+  document.getElementById('countReorder').textContent = reorder;
+  document.getElementById('countWarning').textContent = warning;
+  document.getElementById('countOk').textContent = ok;
+
+  const statusMap = {
+    reorder: ['badge-danger','⚠ Reorder Sekarang!'],
+    warning: ['badge-warning','⚡ Segera Reorder'],
+    ok:      ['badge-success','✓ Aman']
+  };
+
+  document.getElementById('ropBody').innerHTML = rows.map(({ item, r, selisih, status, beli }) => {
+    const [cls, lbl] = statusMap[status];
+    return `<tr>
+      <td class="mono muted">${item.id}</td>
+      <td style="font-weight:600">${item.nama}</td>
+      <td class="muted">${item.satuan}</td>
+      <td class="mono">${app.fmtNum(item.avgDaily)}</td>
+      <td class="mono">${item.lead} hr</td>
+      <td class="mono">${app.fmtNum(item.safety)}</td>
+      <td class="mono" style="font-weight:700">${app.fmtNum(r)}</td>
+      <td class="mono" style="color:${status==='reorder'?'var(--accent-red)':status==='warning'?'var(--accent-amber)':'var(--accent-green)';};font-weight:700">${app.fmtNum(item.stok)}</td>
+      <td class="mono" style="color:${selisih<0?'var(--accent-red)':'var(--text-secondary)'}">${selisih>=0?'+':''}${app.fmtNum(selisih)}</td>
+      <td class="mono" style="color:var(--accent-amber)">${beli>0?app.fmtNum(beli)+' '+item.satuan:'—'}</td>
+      <td><span class="badge ${cls}" style="font-size:10px">${lbl}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text-muted)">Tidak ada data</td></tr>';
+}
+
+document.addEventListener('DOMContentLoaded', renderROP);
+</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/sync.js"></script>
+</body>
+</html>

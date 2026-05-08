@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarkopPOS — Stok Opname</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Auth Guard — redirect ke login jika belum login
+  (function() {
+    var s = sessionStorage.getItem('warkop_session');
+    if (!s) { window.location.href = '../login.html'; return; }
+    try { var sess = JSON.parse(s); if (Date.now() > sess.expiresAt) { sessionStorage.removeItem('warkop_session'); window.location.href = '../login.html'; } }
+    catch(e) { window.location.href = '../login.html'; }
+  })();
+</script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">☕</div><div class="brand-text"><span class="brand-name">WarkopPOS</span><span class="brand-sub">Stok Opname System</span></div></div>
+  <div class="role-pill" id="rolePill"><span class="role-dot"></span><span id="roleLabel">Owner</span></div>
+  <nav class="nav">
+    <div class="nav-section">Utama</div>
+    <a href="../index.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg>Dashboard</a>
+    <a href="pos.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/></svg>Kasir POS</a>
+    <a href="opname.html" class="nav-link active"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/></svg>Stok Opname</a>
+    <div class="nav-section">Laporan</div>
+    <a href="reorder.html" class="nav-link"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>Reorder Point<span class="nav-badge danger">3</span></a>
+  </nav>
+      <div class="nav-section">Sistem</div>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Manajemen User</a>
+    <a href="settings.html" class="nav-link owner-only"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Pengaturan Sync</a>
+  <div class="sidebar-footer"><select id="roleSwitch" onchange="window.WarkopApp.switchRole(this.value)"><option value="owner">🔑 Login: Owner</option><option value="karyawan">👤 Login: Karyawan</option></select></div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="window.WarkopApp.toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1 class="page-title">Stok Opname Harian</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-display" id="clockDisplay">—</div>
+
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span id="syncStatus" style="font-size:10px;font-weight:700;color:var(--accent-amber);cursor:pointer;"
+          onclick="window.WarkopSync?.showConfigModal()" title="Klik untuk konfigurasi sync">
+          ○ Belum terhubung
+        </span>
+        <span id="lastSync" style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);">Klik untuk setup</span>
+      </div>
+      <span class="badge badge-info">Shift Pagi 06:00–14:00</span>
+    </div>
+  </header>
+
+  <div class="page-content">
+    <div class="grid-2">
+      <!-- INPUT FORM -->
+      <div class="card" data-animate="fade-up" style="--delay:0ms">
+        <div class="card-header">
+          <h2 class="card-title">Input Stok Opname</h2>
+          <span class="badge badge-gray" id="opnameCount">0 item</span>
+        </div>
+
+        <div class="scan-zone" onclick="doScan()">
+          <span class="scan-icon">▦</span>
+          <div class="scan-title">Scan Barcode PDT DC-108</div>
+          <div class="scan-sub">Klik area ini atau scan langsung via PDT scanner</div>
+          <button class="btn btn-sm btn-outline" style="margin-top:12px" onclick="event.stopPropagation();doScan()">
+            Simulasi Scan
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Nama Petugas</label>
+            <input type="text" id="petugasInput" value="Andi Prasetyo" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shift</label>
+            <select id="shiftInput">
+              <option>Pagi (06.00–14.00)</option>
+              <option>Siang (14.00–22.00)</option>
+              <option>Malam (22.00–06.00)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Barcode / ID</label>
+            <input type="text" id="barcodeInput" placeholder="Scan atau ketik barcode" oninput="lookupBarcode(this.value)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nama Barang (Auto)</label>
+            <input type="text" id="namaInput" readonly style="background:var(--bg-elevated);opacity:.8" />
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Stok Sistem (Auto)</label>
+            <input type="number" id="stokSistemInput" readonly style="background:var(--bg-elevated);opacity:.8;font-family:var(--font-mono)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stok Fisik (Hitung Manual)</label>
+            <input type="number" id="stokFisikInput" placeholder="0" oninput="calcSelisih()" style="font-family:var(--font-mono)" />
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Selisih (Auto)</label>
+            <input type="text" id="selisihInput" readonly style="background:var(--bg-elevated);font-family:var(--font-mono);font-weight:700" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Keterangan</label>
+            <input type="text" id="keteranganInput" placeholder="Tumpah / tercecer / dll" />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn btn-primary" onclick="saveOpname()">Simpan Opname</button>
+          <button class="btn btn-outline" onclick="requestApproval()">Minta Approval Owner</button>
+          <button class="btn btn-outline" onclick="resetForm()">Reset</button>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="card" data-animate="fade-up" style="--delay:120ms">
+        <div class="card-header">
+          <h2 class="card-title">Riwayat Opname Hari Ini</h2>
+          <button class="btn btn-sm btn-outline" onclick="exportOpname()">Ekspor</button>
+        </div>
+        <div style="overflow-y:auto;max-height:500px;">
+          <table class="data-table">
+            <thead><tr><th>Waktu</th><th>Barang</th><th>Sistem</th><th>Fisik</th><th>Selisih</th><th>Status</th></tr></thead>
+            <tbody id="opnameBody">
+              <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Belum ada data opname hari ini</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+<script>
+let opnameData = [];
+
+function lookupBarcode(val) {
+  const app = window.WarkopApp;
+  const item = app.state.barang.find(b => b.id === val.trim().toUpperCase());
+  if (item) {
+    document.getElementById('namaInput').value = item.nama;
+    document.getElementById('stokSistemInput').value = item.stok;
+    document.getElementById('stokFisikInput').value = '';
+    document.getElementById('selisihInput').value = '';
+    document.getElementById('selisihInput').style.color = 'var(--text-primary)';
+  } else {
+    document.getElementById('namaInput').value = '';
+    document.getElementById('stokSistemInput').value = '';
+  }
+}
+
+function doScan() {
+  const app = window.WarkopApp;
+  const item = app.simulateScan('barcodeInput', 'namaInput', 'stokSistemInput');
+  document.getElementById('stokFisikInput').value = '';
+  document.getElementById('selisihInput').value = '';
+}
+
+function calcSelisih() {
+  const s = parseFloat(document.getElementById('stokSistemInput').value) || 0;
+  const f = parseFloat(document.getElementById('stokFisikInput').value) || 0;
+  const diff = f - s;
+  const el = document.getElementById('selisihInput');
+  el.value = (diff >= 0 ? '+' : '') + diff.toFixed(2);
+  el.style.color = diff < 0 ? 'var(--accent-red)' : diff > 0 ? 'var(--accent-amber)' : 'var(--accent-green)';
+}
+
+function saveOpname() {
+  const app = window.WarkopApp;
+  const barcode = document.getElementById('barcodeInput').value;
+  const nama = document.getElementById('namaInput').value;
+  const sistem = parseFloat(document.getElementById('stokSistemInput').value) || 0;
+  const fisik = parseFloat(document.getElementById('stokFisikInput').value);
+  if (!nama || isNaN(fisik)) { app.toast('Lengkapi data terlebih dahulu!', 'error'); return; }
+  const selisih = fisik - sistem;
+  const pct = sistem > 0 ? Math.abs(selisih/sistem) : 0;
+  const status = pct > 0.1 ? 'Perlu Approval' : 'OK';
+  const t = new Date().toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'});
+  opnameData.unshift({ waktu:t, nama, sistem, fisik, selisih, status, ket: document.getElementById('keteranganInput').value });
+  renderOpname();
+  app.toast(`Opname ${nama} tersimpan ${status === 'Perlu Approval' ? '— perlu approval!' : '✓'}`, status === 'Perlu Approval' ? 'warning' : 'success');
+  resetForm();
+}
+
+function requestApproval() {
+  window.WarkopApp.toast('Permintaan approval dikirim ke Owner via notifikasi!', 'warning');
+}
+
+function exportOpname() {
+  window.WarkopApp.toast('Data opname diekspor ke CSV!', 'success');
+}
+
+function resetForm() {
+  ['barcodeInput','namaInput','stokSistemInput','stokFisikInput','selisihInput','keteranganInput']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('selisihInput').style.color = 'var(--text-primary)';
+}
+
+function renderOpname() {
+  const tbody = document.getElementById('opnameBody');
+  const count = document.getElementById('opnameCount');
+  count.textContent = opnameData.length + ' item';
+  tbody.innerHTML = opnameData.map(d => `
+    <tr>
+      <td class="mono muted">${d.waktu}</td>
+      <td style="font-weight:600">${d.nama}</td>
+      <td class="mono">${d.sistem}</td>
+      <td class="mono">${d.fisik}</td>
+      <td class="mono" style="color:${d.selisih<0?'var(--accent-red)':d.selisih>0?'var(--accent-amber)':'var(--accent-green)'}">${d.selisih>=0?'+':''}${d.selisih.toFixed(2)}</td>
+      <td><span class="badge ${d.status==='OK'?'badge-success':'badge-warning'}" style="font-size:10px">${d.status==='OK'?'✓ OK':'⚠ Approval'}</span></td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Belum ada data</td></tr>';
+}
+</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/sync.js"></script>
+</body>
+</html>
